@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mic, FileText, Share2, Trash2, Play, Scissors, ChevronDown,
   ChevronUp, Eye, Headphones, MessageSquare, Users,
-  BookOpen, CheckCircle2, XCircle, Sparkles, ExternalLink, Clock, AlertCircle,
+  BookOpen, CheckCircle2, XCircle, Sparkles, Clock,
   School, Globe, MapPin, Building2, ChevronRight
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -508,57 +508,46 @@ function SharedMaterialDetail({ mat }: { mat: SharedMaterial }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-4 bg-gray-50/50">
-              {/* Stats cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-                {[
-                  { icon: <Eye className="w-4 h-4 text-violet-500" />, value: mat.stats.totalViews, label: 'Wyświetleń', bg: '#ede9fe' },
-                  { icon: <Headphones className="w-4 h-4 text-sky-500" />, value: mat.stats.totalListens, label: 'Odsłuchań', bg: '#e0f2fe' },
-                  { icon: <MessageSquare className="w-4 h-4 text-emerald-500" />, value: mat.stats.commentCount, label: 'Komentarzy', bg: '#d1fae5' },
-                  { icon: <ExternalLink className="w-4 h-4 text-amber-500" />, value: mat.stats.externalViews, label: 'Spoza szkoły', bg: '#fef3c7' },
-                ].map(({ icon, value, label, bg }) => (
-                  <div key={label} className="p-3 rounded-2xl text-center" style={{ background: bg }}>
-                    <div className="flex justify-center mb-1">{icon}</div>
-                    <div className="text-xl font-bold text-gray-800">{value}</div>
-                    <div className="text-xs text-gray-600">{label}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Per-class stats */}
-              <div>
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Statystyki klas</div>
-                <div className="space-y-2">
-                  {mat.stats.classStats.map(cs => {
-                    const pct = Math.round((cs.studentsOpened / cs.totalStudents) * 100);
-                    const notOpened = cs.totalStudents - cs.studentsOpened;
-                    return (
-                      <div key={cs.classId} className="p-3 bg-white rounded-2xl border border-gray-100">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-sm text-gray-800">{cs.className}</span>
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1 text-emerald-600">
-                              <CheckCircle2 className="w-3 h-3" /> {cs.studentsOpened} otworzyło
-                            </span>
-                            {notOpened > 0 && (
-                              <span className="flex items-center gap-1 text-rose-500">
-                                <AlertCircle className="w-3 h-3" /> {notOpened} nie otworzyło
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${pct}%` }} />
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-400 mt-1">
-                          <span>0</span>
-                          <span>{pct}% uczniów</span>
-                          <span>{cs.totalStudents}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            <div className="px-4 pb-4 pt-1 space-y-4 bg-gray-50/50">
+              {/* Per-class stats table */}
+              <div className="overflow-x-auto rounded-2xl border border-gray-100">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      <th className="text-left px-4 py-2.5">Klasa</th>
+                      <th className="text-right px-4 py-2.5">Uczniów</th>
+                      <th className="text-right px-4 py-2.5">Otworzyło</th>
+                      <th className="text-right px-4 py-2.5">Nie otworzyło</th>
+                      <th className="text-right px-4 py-2.5">Wyświetleń</th>
+                      {mat.stats.totalListens > 0 && <th className="text-right px-4 py-2.5">Odsłuchań</th>}
+                      {mat.stats.externalViews > 0 && <th className="text-right px-4 py-2.5">Spoza szkoły</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 bg-white">
+                    {mat.stats.classStats.map(cs => (
+                      <tr key={cs.classId} className="hover:bg-violet-50/40 transition-colors">
+                        <td className="px-4 py-2.5 font-medium text-gray-800">{cs.className}</td>
+                        <td className="px-4 py-2.5 text-right text-gray-600">{cs.totalStudents}</td>
+                        <td className="px-4 py-2.5 text-right text-emerald-600 font-medium">{cs.studentsOpened}</td>
+                        <td className="px-4 py-2.5 text-right text-rose-500">{cs.totalStudents - cs.studentsOpened}</td>
+                        <td className="px-4 py-2.5 text-right text-gray-600">{cs.viewCount}</td>
+                        {mat.stats.totalListens > 0 && <td className="px-4 py-2.5 text-right text-gray-600">{cs.listenCount}</td>}
+                        {mat.stats.externalViews > 0 && <td className="px-4 py-2.5 text-right text-gray-600">—</td>}
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-violet-50 font-semibold text-gray-800 border-t-2 border-violet-200">
+                      <td className="px-4 py-2.5 text-violet-700 uppercase text-xs tracking-wider">Łącznie</td>
+                      <td className="px-4 py-2.5 text-right">{mat.stats.classStats.reduce((s, cs) => s + cs.totalStudents, 0)}</td>
+                      <td className="px-4 py-2.5 text-right text-emerald-600">{mat.stats.classStats.reduce((s, cs) => s + cs.studentsOpened, 0)}</td>
+                      <td className="px-4 py-2.5 text-right text-rose-500">{mat.stats.classStats.reduce((s, cs) => s + cs.totalStudents - cs.studentsOpened, 0)}</td>
+                      <td className="px-4 py-2.5 text-right">{mat.stats.totalViews}</td>
+                      {mat.stats.totalListens > 0 && <td className="px-4 py-2.5 text-right">{mat.stats.totalListens}</td>}
+                      {mat.stats.externalViews > 0 && <td className="px-4 py-2.5 text-right">{mat.stats.externalViews}</td>}
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
 
               {/* Comments */}
