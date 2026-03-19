@@ -1,6 +1,6 @@
 import type {
   Teacher, Class, CurriculumUnit, CurriculumTopic, TopicStatus,
-  Recording, Note, SharedMaterial, GeneratedTest
+  Recording, Note, SharedMaterial, GeneratedTest, ScheduleTemplate
 } from '../types';
 
 // ─── Teacher ─────────────────────────────────────────────────────────────────
@@ -260,6 +260,100 @@ export const mockSharedMaterials: SharedMaterial[] = [
         { classId: 'c3', className: '7A', totalStudents: 26, studentsOpened: 12, viewCount: 14, listenCount: 11 },
       ],
     },
+  },
+];
+
+// ─── Schedule Templates ───────────────────────────────────────────────────────
+
+export const mockScheduleTemplates: ScheduleTemplate[] = [
+  {
+    id: 'st1',
+    name: 'Matematyka – klasa 6 (SP)',
+    description: 'Standardowy program dla klasy 6 szkoły podstawowej',
+    subject: 'Matematyka',
+    grade: 6,
+    schoolType: 'primary',
+    createdAt: '2026-01-10',
+    units: [
+      {
+        id: 'stu1', name: 'Liczby i działania', order: 1,
+        topics: [
+          { id: 'stp1', name: 'Liczby rzeczywiste – powtórzenie', order: 1 },
+          { id: 'stp2', name: 'Potęgi i pierwiastki', order: 2 },
+          { id: 'stp3', name: 'Logarytmy – wprowadzenie', order: 3 },
+        ],
+      },
+      {
+        id: 'stu2', name: 'Wyrażenia algebraiczne', order: 2,
+        topics: [
+          { id: 'stp4', name: 'Wielomiany – dodawanie i odejmowanie', order: 1 },
+          { id: 'stp5', name: 'Mnożenie wielomianów', order: 2 },
+          { id: 'stp6', name: 'Wzory skróconego mnożenia', order: 3 },
+        ],
+      },
+      {
+        id: 'stu3', name: 'Geometria płaska', order: 3,
+        topics: [
+          { id: 'stp7', name: 'Trójkąty i ich własności', order: 1 },
+          { id: 'stp8', name: 'Koła i okręgi', order: 2 },
+          { id: 'stp9', name: 'Pole i obwód figur płaskich', order: 3 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'st2',
+    name: 'Matematyka – klasa 7 (SP)',
+    description: 'Program dla klasy 7, rozszerzony o funkcje',
+    subject: 'Matematyka',
+    grade: 7,
+    schoolType: 'primary',
+    createdAt: '2026-01-10',
+    units: [
+      {
+        id: 'stu4', name: 'Funkcje', order: 1,
+        topics: [
+          { id: 'stp10', name: 'Pojęcie funkcji', order: 1 },
+          { id: 'stp11', name: 'Funkcja liniowa', order: 2 },
+          { id: 'stp12', name: 'Funkcja kwadratowa', order: 3 },
+          { id: 'stp13', name: 'Przekształcenia wykresów funkcji', order: 4 },
+        ],
+      },
+      {
+        id: 'stu5', name: 'Statystyka', order: 2,
+        topics: [
+          { id: 'stp14', name: 'Średnia, mediana, dominanta', order: 1 },
+          { id: 'stp15', name: 'Diagramy i wykresy', order: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'st3',
+    name: 'Fizyka – klasa 2 LO',
+    description: 'Program fizyki dla klasy 2 liceum ogólnokształcącego',
+    subject: 'Fizyka',
+    grade: 2,
+    schoolType: 'high',
+    createdAt: '2026-01-15',
+    units: [
+      {
+        id: 'stu6', name: 'Mechanika', order: 1,
+        topics: [
+          { id: 'stp16', name: 'Kinematyka – powtórzenie', order: 1 },
+          { id: 'stp17', name: 'Dynamika Newtona', order: 2 },
+          { id: 'stp18', name: 'Praca, moc i energia', order: 3 },
+        ],
+      },
+      {
+        id: 'stu7', name: 'Elektryczność i magnetyzm', order: 2,
+        topics: [
+          { id: 'stp19', name: 'Ładunek elektryczny i pole elektrostatyczne', order: 1 },
+          { id: 'stp20', name: 'Prąd elektryczny i obwody', order: 2 },
+          { id: 'stp21', name: 'Pole magnetyczne', order: 3 },
+        ],
+      },
+    ],
   },
 ];
 

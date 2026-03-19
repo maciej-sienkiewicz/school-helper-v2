@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, Video,
-  FlaskConical, User, GraduationCap, Sparkles
+  FlaskConical, User, GraduationCap, Sparkles, LayoutTemplate
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { mockTeacher } from '../../data/mockData';
@@ -9,6 +9,7 @@ import { mockTeacher } from '../../data/mockData';
 const navItems = [
   { to: '/teacher', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/teacher/schedule', label: 'Klasy & Program', icon: Calendar },
+  { to: '/teacher/schedule-templates', label: 'Szablony harmonogramów', icon: LayoutTemplate },
   { to: '/teacher/recordings', label: 'Nagrania', icon: Video },
   { to: '/teacher/tests', label: 'Generator Testów', icon: FlaskConical },
   { to: '/teacher/profile', label: 'Profil', icon: User },
