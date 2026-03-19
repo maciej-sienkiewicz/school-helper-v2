@@ -1,3 +1,29 @@
+// ─── Sharing Scope ────────────────────────────────────────────────────────────
+
+export type ShareScopeType = 'class' | 'grade' | 'school' | 'district' | 'province' | 'all';
+
+export interface ShareScope {
+  type: ShareScopeType;
+  classId?: string;      // when type === 'class'
+  className?: string;    // when type === 'class'
+  grade?: number;        // when type === 'grade'
+  schoolType?: 'primary' | 'high'; // when type === 'grade'
+}
+
+// ─── Schedule Templates ───────────────────────────────────────────────────────
+
+export interface ScheduleTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  description?: string;
+  schoolType: 'primary' | 'high';
+  grade: number;
+  unitIds: string[];   // references to CurriculumUnit ids
+  topicIds: string[];  // references to CurriculumTopic ids
+  createdAt: string;
+}
+
 // ─── Teacher & Classes ───────────────────────────────────────────────────────
 
 export interface Teacher {
@@ -16,6 +42,7 @@ export interface Class {
   subject: string;
   studentCount: number;
   color: string; // pastel color for card
+  templateId?: string; // optional assigned schedule template
 }
 
 // ─── Curriculum / Topics ─────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import type {
   Teacher, Class, CurriculumUnit, CurriculumTopic, TopicStatus,
-  Recording, Note, SharedMaterial, GeneratedTest
+  Recording, Note, SharedMaterial, GeneratedTest, ScheduleTemplate
 } from '../types';
 
 // ─── Teacher ─────────────────────────────────────────────────────────────────
@@ -332,6 +332,44 @@ export const mockGeneratedTests: GeneratedTest[] = [
         },
       },
     ],
+  },
+];
+
+// ─── Schedule Templates ───────────────────────────────────────────────────────
+
+export const mockScheduleTemplates: ScheduleTemplate[] = [
+  {
+    id: 'st1',
+    name: 'Matematyka SP klasa 6 – pełny rok',
+    subject: 'Matematyka',
+    description: 'Kompletny program nauczania matematyki dla klasy 6 szkoły podstawowej. Obejmuje liczby, algebrę, geometrię i statystykę.',
+    schoolType: 'primary',
+    grade: 6,
+    unitIds: ['u1', 'u2', 'u4', 'u5'],
+    topicIds: ['tp1', 'tp2', 'tp3', 'tp4', 'tp5', 'tp6', 'tp11', 'tp12', 'tp13', 'tp14', 'tp15'],
+    createdAt: '2025-09-01',
+  },
+  {
+    id: 'st2',
+    name: 'Matematyka SP klasa 7 – funkcje i geometria',
+    subject: 'Matematyka',
+    description: 'Program dla klasy 7 z naciskiem na funkcje liniowe, kwadratowe oraz geometrię płaską.',
+    schoolType: 'primary',
+    grade: 7,
+    unitIds: ['u3', 'u4'],
+    topicIds: ['tp7', 'tp8', 'tp9', 'tp10', 'tp11', 'tp12', 'tp13'],
+    createdAt: '2025-09-01',
+  },
+  {
+    id: 'st3',
+    name: 'Matematyka LO klasa 2 – rozszerzona',
+    subject: 'Matematyka',
+    description: 'Rozszerzony program matematyki dla klasy 2 liceum. Logarytmy, funkcje, algebra i statystyka.',
+    schoolType: 'high',
+    grade: 2,
+    unitIds: ['u1', 'u2', 'u3', 'u5'],
+    topicIds: ['tp1', 'tp2', 'tp3', 'tp4', 'tp5', 'tp6', 'tp7', 'tp8', 'tp9', 'tp10', 'tp14', 'tp15'],
+    createdAt: '2025-09-02',
   },
 ];
 
