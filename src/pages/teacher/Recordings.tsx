@@ -4,7 +4,7 @@ import {
   Mic, FileText, Share2, Trash2, Play, Scissors, ChevronDown,
   ChevronUp, Eye, Headphones, MessageSquare, Users,
   BookOpen, CheckCircle2, XCircle, Sparkles, Clock,
-  School, Globe, MapPin, Building2, ChevronRight
+  School, Globe, MapPin, Building2
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -467,34 +467,37 @@ function RecordingCard({ rec }: { rec: Recording }) {
   );
 }
 
-// ─── Shared Material Row (detail, used inside table) ─────────────────────────
+// ─── Shared Material Row ──────────────────────────────────────────────────────
 
 function SharedMaterialDetail({ mat }: { mat: SharedMaterial }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border-b border-gray-50 last:border-0">
-      {/* Table row */}
+    <div className="border border-gray-100 rounded-3xl overflow-hidden">
+      {/* Collapsed header – original card aesthetic */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto] items-center gap-4 px-4 py-3 hover:bg-violet-50/50 transition-colors cursor-pointer text-left text-sm"
+        className="w-full flex items-center gap-4 p-4 hover:bg-violet-50/60 transition-colors cursor-pointer text-left"
       >
-        <div className="min-w-0">
-          <div className="font-medium text-gray-800 truncate">{mat.topicName}</div>
-          <div className="text-xs text-gray-500 truncate">{mat.unitName}</div>
+        <div className="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+          <BookOpen className="w-4 h-4 text-violet-600" />
         </div>
-        <Badge variant={mat.type === 'both' ? 'purple' : 'green'} className="flex-shrink-0">
-          {mat.type === 'note' ? 'Notatka' : mat.type === 'audio' ? 'Audio' : 'Nota + Audio'}
-        </Badge>
-        <span className="text-xs text-gray-500 flex-shrink-0">{format(parseISO(mat.sharedAt), 'd MMM yy', { locale: pl })}</span>
-        <span className="text-xs text-gray-600 flex items-center gap-1 flex-shrink-0">
-          <Eye className="w-3 h-3 text-violet-400" />{mat.stats.totalViews}
-        </span>
-        <span className="text-xs text-gray-600 flex items-center gap-1 flex-shrink-0">
-          <MessageSquare className="w-3 h-3 text-emerald-400" />{mat.stats.commentCount}
-        </span>
-        <div className="flex-shrink-0">
-          {expanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-400" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-400" />}
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-gray-800 text-sm">{mat.topicName}</div>
+          <div className="text-xs text-gray-500 mt-0.5">
+            {mat.unitName} · {mat.sharedWithClasses.join(', ')} · {format(parseISO(mat.sharedAt), 'd MMM yyyy', { locale: pl })}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500">
+            <span className="flex items-center gap-1"><Eye className="w-3 h-3" />{mat.stats.totalViews}</span>
+            {mat.stats.totalListens > 0 && <span className="flex items-center gap-1"><Headphones className="w-3 h-3" />{mat.stats.totalListens}</span>}
+            {mat.stats.commentCount > 0 && <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{mat.stats.commentCount}</span>}
+          </div>
+          <Badge variant={mat.type === 'both' ? 'purple' : 'green'}>
+            {mat.type === 'note' ? 'Notatka' : mat.type === 'audio' ? 'Audio' : 'Notatka + Audio'}
+          </Badge>
+          {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
         </div>
       </button>
 
@@ -508,43 +511,65 @@ function SharedMaterialDetail({ mat }: { mat: SharedMaterial }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-1 space-y-4 bg-gray-50/50">
+            <div className="px-5 pb-5 pt-1 space-y-4 border-t border-gray-100">
               {/* Per-class stats table */}
-              <div className="overflow-x-auto rounded-2xl border border-gray-100">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-violet-100">
+                <table className="w-full text-sm border-collapse">
                   <thead>
-                    <tr className="bg-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      <th className="text-left px-4 py-2.5">Klasa</th>
-                      <th className="text-right px-4 py-2.5">Uczniów</th>
-                      <th className="text-right px-4 py-2.5">Otworzyło</th>
-                      <th className="text-right px-4 py-2.5">Nie otworzyło</th>
-                      <th className="text-right px-4 py-2.5">Wyświetleń</th>
-                      {mat.stats.totalListens > 0 && <th className="text-right px-4 py-2.5">Odsłuchań</th>}
-                      {mat.stats.externalViews > 0 && <th className="text-right px-4 py-2.5">Spoza szkoły</th>}
+                    <tr className="bg-violet-50">
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-violet-600 uppercase tracking-wider rounded-tl-2xl">Klasa</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-violet-600 uppercase tracking-wider">Uczniów</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-emerald-600 uppercase tracking-wider">Otworzyło</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-rose-400 uppercase tracking-wider">Nie otworzyło</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-violet-600 uppercase tracking-wider">Wyświetleń</th>
+                      {mat.stats.totalListens > 0 && <th className="text-right px-4 py-3 text-xs font-semibold text-sky-500 uppercase tracking-wider">Odsłuchań</th>}
+                      {mat.stats.externalViews > 0 && <th className="text-right px-4 py-3 text-xs font-semibold text-amber-500 uppercase tracking-wider rounded-tr-2xl">Spoza szkoły</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {mat.stats.classStats.map(cs => (
-                      <tr key={cs.classId} className="hover:bg-violet-50/40 transition-colors">
-                        <td className="px-4 py-2.5 font-medium text-gray-800">{cs.className}</td>
-                        <td className="px-4 py-2.5 text-right text-gray-600">{cs.totalStudents}</td>
-                        <td className="px-4 py-2.5 text-right text-emerald-600 font-medium">{cs.studentsOpened}</td>
-                        <td className="px-4 py-2.5 text-right text-rose-500">{cs.totalStudents - cs.studentsOpened}</td>
-                        <td className="px-4 py-2.5 text-right text-gray-600">{cs.viewCount}</td>
-                        {mat.stats.totalListens > 0 && <td className="px-4 py-2.5 text-right text-gray-600">{cs.listenCount}</td>}
-                        {mat.stats.externalViews > 0 && <td className="px-4 py-2.5 text-right text-gray-600">—</td>}
+                  <tbody>
+                    {mat.stats.classStats.map((cs, idx) => (
+                      <tr
+                        key={cs.classId}
+                        className={`border-t border-violet-50 transition-colors hover:bg-violet-50/40 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}
+                      >
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center">{cs.className.slice(0, 2)}</span>
+                            <span className="font-medium text-gray-800">{cs.className}</span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-500">{cs.totalStudents}</td>
+                        <td className="px-4 py-3 text-right">
+                          <span className="text-emerald-600 font-semibold">{cs.studentsOpened}</span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span className={cs.totalStudents - cs.studentsOpened > 0 ? 'text-rose-500' : 'text-gray-300'}>
+                            {cs.totalStudents - cs.studentsOpened}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-600">{cs.viewCount}</td>
+                        {mat.stats.totalListens > 0 && <td className="px-4 py-3 text-right text-gray-600">{cs.listenCount}</td>}
+                        {mat.stats.externalViews > 0 && <td className="px-4 py-3 text-right text-gray-400">—</td>}
                       </tr>
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="bg-violet-50 font-semibold text-gray-800 border-t-2 border-violet-200">
-                      <td className="px-4 py-2.5 text-violet-700 uppercase text-xs tracking-wider">Łącznie</td>
-                      <td className="px-4 py-2.5 text-right">{mat.stats.classStats.reduce((s, cs) => s + cs.totalStudents, 0)}</td>
-                      <td className="px-4 py-2.5 text-right text-emerald-600">{mat.stats.classStats.reduce((s, cs) => s + cs.studentsOpened, 0)}</td>
-                      <td className="px-4 py-2.5 text-right text-rose-500">{mat.stats.classStats.reduce((s, cs) => s + cs.totalStudents - cs.studentsOpened, 0)}</td>
-                      <td className="px-4 py-2.5 text-right">{mat.stats.totalViews}</td>
-                      {mat.stats.totalListens > 0 && <td className="px-4 py-2.5 text-right">{mat.stats.totalListens}</td>}
-                      {mat.stats.externalViews > 0 && <td className="px-4 py-2.5 text-right">{mat.stats.externalViews}</td>}
+                    <tr className="border-t-2 border-violet-200 bg-violet-50">
+                      <td className="px-4 py-3 rounded-bl-2xl">
+                        <span className="text-xs font-bold text-violet-600 uppercase tracking-widest">Łącznie</span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-700">
+                        {mat.stats.classStats.reduce((s, cs) => s + cs.totalStudents, 0)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-emerald-600">
+                        {mat.stats.classStats.reduce((s, cs) => s + cs.studentsOpened, 0)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-rose-500">
+                        {mat.stats.classStats.reduce((s, cs) => s + cs.totalStudents - cs.studentsOpened, 0)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-700">{mat.stats.totalViews}</td>
+                      {mat.stats.totalListens > 0 && <td className="px-4 py-3 text-right font-semibold text-gray-700">{mat.stats.totalListens}</td>}
+                      {mat.stats.externalViews > 0 && <td className="px-4 py-3 text-right font-semibold text-gray-700 rounded-br-2xl">{mat.stats.externalViews}</td>}
                     </tr>
                   </tfoot>
                 </table>
@@ -624,18 +649,8 @@ function GradeSection({ grade, materials }: { grade: number; materials: SharedMa
             transition={{ duration: 0.25 }}
             className="overflow-hidden"
           >
-            {/* Table header */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-4 px-4 py-2 bg-gray-50 border-t border-gray-100 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              <span>Temat / Dział</span>
-              <span>Typ</span>
-              <span>Data</span>
-              <span>Wyświetl.</span>
-              <span>Koment.</span>
-              <span />
-            </div>
-
             {/* Rows */}
-            <div className="divide-y divide-gray-50">
+            <div className="p-4 space-y-3 border-t border-gray-100">
               {materials.map(mat => (
                 <SharedMaterialDetail key={mat.id} mat={mat} />
               ))}
