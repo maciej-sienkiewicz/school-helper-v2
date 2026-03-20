@@ -8,7 +8,7 @@ import {
 import { Card, SectionTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Blob } from '../../components/ui/Blob';
+import { Blob as BlobShape } from '../../components/ui/Blob';
 import { mockUnits, mockTopics, mockTopicStatuses, mockGeneratedTests } from '../../data/mockData';
 import type { TestQuestion, GeneratedTest } from '../../types';
 
@@ -523,8 +523,8 @@ export function Tests() {
 
   return (
     <div className="min-h-screen relative overflow-hidden p-8">
-      <Blob color="#fde68a" size="xl" className="-top-20 -right-20" />
-      <Blob color="#ddd6fe" size="lg" className="bottom-10 left-0" delay animated />
+      <BlobShape color="#fde68a" size="xl" className="-top-20 -right-20" />
+      <BlobShape color="#ddd6fe" size="lg" className="bottom-10 left-0" delay animated />
 
       <div className="relative max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
