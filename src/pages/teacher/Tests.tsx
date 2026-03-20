@@ -69,10 +69,6 @@ function exportTestToPDF(test: GeneratedTest) {
           </thead>
           <tbody>${rowsHtml}</tbody>
         </table>
-        <div class="answer-lines" style="margin-top:8px">
-          <div class="answer-line"></div>
-          <div class="answer-line"></div>
-        </div>
       `;
     }
     return '';
@@ -235,6 +231,10 @@ function exportTestToPDF(test: GeneratedTest) {
       font-size: 9pt;
       color: #777;
     }
+    @page {
+      size: A4;
+      margin: 0;
+    }
     @media print {
       body { padding: 15mm 15mm 15mm 20mm; }
       .no-print { display: none; }
@@ -272,17 +272,20 @@ function exportTestToPDF(test: GeneratedTest) {
     <span>Podpis: _____________________</span>
   </div>
 
-  <script>
-    window.onload = function() { window.print(); };
-  </script>
 </body>
 </html>`;
 
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const win = window.open(url, '_blank');
-  if (win) {
-    win.addEventListener('afterprint', () => URL.revokeObjectURL(url));
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('style', 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;');
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument!;
+  doc.open();
+  doc.write(html);
+  doc.close();
+  const cleanup = () => { document.body.removeChild(iframe); };
+  if (iframe.contentWindow) {
+    iframe.contentWindow.onafterprint = cleanup;
+    setTimeout(() => { iframe.contentWindow!.focus(); iframe.contentWindow!.print(); }, 150);
   }
 }
 
