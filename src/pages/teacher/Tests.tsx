@@ -12,6 +12,280 @@ import { Blob } from '../../components/ui/Blob';
 import { mockUnits, mockTopics, mockTopicStatuses, mockGeneratedTests } from '../../data/mockData';
 import type { TestQuestion, GeneratedTest } from '../../types';
 
+function exportTestToPDF(test: GeneratedTest) {
+  const totalPoints = test.questions.reduce((s, q) => s + q.points, 0);
+
+  const renderQuestion = (q: TestQuestion, index: number): string => {
+    const questionHtml = `
+      <div class="question">
+        <div class="question-header">
+          <span class="question-number">${index + 1}.</span>
+          <span class="question-text">${q.question}</span>
+          <span class="question-points">(${q.points} pkt)</span>
+        </div>
+        ${renderAnswerArea(q)}
+      </div>
+    `;
+    return questionHtml;
+  };
+
+  const renderAnswerArea = (q: TestQuestion): string => {
+    if (q.type === 'open') {
+      return `
+        <div class="answer-lines">
+          <div class="answer-line"></div>
+          <div class="answer-line"></div>
+          <div class="answer-line"></div>
+          <div class="answer-line"></div>
+        </div>
+      `;
+    }
+    if ((q.type === 'single_choice' || q.type === 'multiple_choice') && q.options) {
+      const optionsHtml = q.options.map((opt, i) => `
+        <div class="option">
+          <span class="option-letter">${String.fromCharCode(65 + i)}.</span>
+          <span class="option-text">${opt}</span>
+        </div>
+      `).join('');
+      return `<div class="options">${optionsHtml}</div>`;
+    }
+    if (q.type === 'matching' && q.leftItems && q.rightItems) {
+      const rows = Math.max(q.leftItems.length, q.rightItems.length);
+      const rowsHtml = Array.from({ length: rows }, (_, i) => `
+        <tr>
+          <td class="match-cell match-left">${q.leftItems![i] ?? ''}</td>
+          <td class="match-arrow">→</td>
+          <td class="match-cell match-right">${q.rightItems![i] ?? ''}</td>
+        </tr>
+      `).join('');
+      return `
+        <table class="matching-table">
+          <thead>
+            <tr>
+              <th>Kolumna A</th>
+              <th></th>
+              <th>Kolumna B</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <div class="answer-lines" style="margin-top:8px">
+          <div class="answer-line"></div>
+          <div class="answer-line"></div>
+        </div>
+      `;
+    }
+    return '';
+  };
+
+  const questionsHtml = test.questions.map((q, i) => renderQuestion(q, i)).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>${test.title}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11pt;
+      color: #111;
+      background: #fff;
+      padding: 20mm 20mm 20mm 25mm;
+      max-width: 210mm;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #333;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+    }
+    .header h1 {
+      font-size: 16pt;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .header .subtitle {
+      font-size: 10pt;
+      color: #555;
+      margin-top: 4px;
+    }
+    .student-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 12px 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    .student-field label {
+      font-size: 9pt;
+      font-weight: bold;
+      color: #444;
+      display: block;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .student-field .field-line {
+      border-bottom: 1.5px solid #333;
+      height: 22px;
+      width: 100%;
+    }
+    .test-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9pt;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .question {
+      margin-bottom: 20px;
+      page-break-inside: avoid;
+    }
+    .question-header {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .question-number {
+      font-weight: bold;
+      font-size: 11pt;
+      flex-shrink: 0;
+    }
+    .question-text {
+      font-weight: bold;
+      font-size: 11pt;
+      flex: 1;
+      line-height: 1.5;
+    }
+    .question-points {
+      font-size: 9pt;
+      color: #666;
+      flex-shrink: 0;
+      font-weight: normal;
+    }
+    .options {
+      margin-left: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px 16px;
+      margin-top: 4px;
+    }
+    .option {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-size: 10.5pt;
+      line-height: 1.6;
+    }
+    .option-letter {
+      font-weight: bold;
+      flex-shrink: 0;
+      min-width: 16px;
+    }
+    .option-text { flex: 1; }
+    .answer-lines {
+      margin-left: 20px;
+      margin-top: 6px;
+    }
+    .answer-line {
+      border-bottom: 1px solid #aaa;
+      height: 24px;
+      margin-bottom: 6px;
+    }
+    .matching-table {
+      margin-left: 20px;
+      margin-top: 4px;
+      border-collapse: collapse;
+      width: calc(100% - 20px);
+      font-size: 10.5pt;
+    }
+    .matching-table th {
+      font-size: 9pt;
+      text-align: left;
+      color: #555;
+      padding: 3px 8px;
+      border-bottom: 1px solid #ccc;
+      font-weight: bold;
+    }
+    .match-cell {
+      padding: 5px 8px;
+      border: 1px solid #ddd;
+    }
+    .match-left { background: #f5f0ff; }
+    .match-right { background: #fffbeb; }
+    .match-arrow {
+      padding: 0 6px;
+      color: #999;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .footer {
+      margin-top: 24px;
+      border-top: 1px solid #ccc;
+      padding-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 9pt;
+      color: #777;
+    }
+    @media print {
+      body { padding: 15mm 15mm 15mm 20mm; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>${test.title}</h1>
+    <div class="subtitle">Sprawdzian · ${test.createdAt}</div>
+  </div>
+
+  <div class="student-info">
+    <div class="student-field">
+      <label>Imię i nazwisko</label>
+      <div class="field-line"></div>
+    </div>
+    <div class="student-field">
+      <label>Klasa</label>
+      <div class="field-line"></div>
+    </div>
+  </div>
+
+  <div class="test-meta">
+    <span>Liczba pytań: <strong>${test.questions.length}</strong></span>
+    <span>Łącznie punktów: <strong>${totalPoints} pkt</strong></span>
+    <span>Czas: <strong>45 minut</strong></span>
+  </div>
+
+  ${questionsHtml}
+
+  <div class="footer">
+    <span>Wynik: _____ / ${totalPoints} pkt</span>
+    <span>Ocena: _____</span>
+    <span>Podpis: _____________________</span>
+  </div>
+
+  <script>
+    window.onload = function() { window.print(); };
+  </script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (win) {
+    win.addEventListener('afterprint', () => URL.revokeObjectURL(url));
+  }
+}
+
 const topicsWithNotes = new Set(
   mockTopicStatuses.filter(s => s.hasNote).map(s => s.topicId)
 );
@@ -157,8 +431,8 @@ function ExistingTestCard({ test }: { test: GeneratedTest }) {
           <p className="text-sm text-gray-500 mt-0.5">Wygenerowany {test.createdAt} · {test.questions.length} pytań</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" icon={<Printer className="w-3.5 h-3.5" />} onClick={() => alert('Eksport PDF – wkrótce!')}>
-            Eksportuj
+          <Button variant="secondary" size="sm" icon={<Printer className="w-3.5 h-3.5" />} onClick={() => exportTestToPDF({ ...test, questions })}>
+            Eksportuj PDF
           </Button>
           <button
             onClick={() => setExpanded(!expanded)}
