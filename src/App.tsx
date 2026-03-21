@@ -3,7 +3,7 @@ import { Layout } from './components/layout/Layout';
 import { Dashboard } from './pages/teacher/Dashboard';
 import { Schedule } from './pages/teacher/Schedule';
 import { ScheduleTemplates } from './pages/teacher/ScheduleTemplates';
-import { Recordings } from './pages/teacher/Recordings';
+import { Recordings } from './pages/teacher/recordings';
 import { Tests } from './pages/teacher/Tests';
 import { Profile } from './pages/teacher/Profile';
 

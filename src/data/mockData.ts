@@ -126,6 +126,22 @@ export const mockRecordings: Recording[] = [
     isSharedNote: false, isSharedAudio: false,
     thumbnailColor: '#fde68a',
   },
+  {
+    id: 'r7', date: '2026-03-19T10:00:00',
+    classId: 'c4', className: '7B', subject: 'Matematyka',
+    durationSeconds: 2580, status: 'transcribing',
+    isSharedNote: false, isSharedAudio: false,
+    topicId: 'tp9', topicName: 'Funkcja kwadratowa',
+    thumbnailColor: '#d1fae5',
+  },
+  {
+    id: 'r8', date: '2026-03-20T08:00:00',
+    classId: 'c2', className: '6B', subject: 'Matematyka',
+    durationSeconds: 2880, status: 'raw',
+    isSharedNote: false, isSharedAudio: false,
+    topicId: 'tp6', topicName: 'Wzory skróconego mnożenia',
+    thumbnailColor: '#ddd6fe',
+  },
 ];
 
 // ─── Notes ───────────────────────────────────────────────────────────────────
