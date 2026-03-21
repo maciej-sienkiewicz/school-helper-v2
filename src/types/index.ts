@@ -102,18 +102,13 @@ export interface Recording {
 
 // ─── Notes ───────────────────────────────────────────────────────────────────
 
-export interface NoteConcept {
-  term: string;
-  definition: string;
-}
-
 export interface Note {
   id: string;
   recordingId: string;
   topicId?: string;
   topicName?: string;
-  summary: string;
-  concepts: NoteConcept[];
+  /** Full document content – plain text with headings and paragraphs */
+  content: string;
   createdAt: string;
   status: 'draft' | 'accepted' | 'deleted';
   sharedWithClasses: string[];

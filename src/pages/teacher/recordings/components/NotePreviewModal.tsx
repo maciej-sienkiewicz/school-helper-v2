@@ -4,6 +4,38 @@ import { Button } from '../../../../components/ui/Button';
 import { Badge } from '../../../../components/ui/Badge';
 import type { Note } from '../../../../types';
 
+function DocRenderer({ content }: { content: string }) {
+  const paragraphs = content.split('\n\n').filter(p => p.trim());
+
+  return (
+    <div className="font-[Georgia,serif] text-gray-800 space-y-4">
+      {paragraphs.map((para, i) => {
+        const trimmed = para.trim();
+        if (i === 0) {
+          return (
+            <h1 key={i} className="text-2xl font-bold text-gray-900 leading-snug font-sans pb-3 border-b border-gray-200">
+              {trimmed}
+            </h1>
+          );
+        }
+        const isHeading = trimmed.length < 80 && !trimmed.endsWith('.') && !trimmed.endsWith(',') && !trimmed.includes('\n');
+        if (isHeading) {
+          return (
+            <h2 key={i} className="text-base font-bold text-violet-700 mt-6 mb-1 font-sans">
+              {trimmed}
+            </h2>
+          );
+        }
+        return (
+          <p key={i} className="text-sm leading-7 text-gray-700">
+            {trimmed}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 interface NotePreviewModalProps {
   note: Note;
   onClose: () => void;
@@ -19,44 +51,31 @@ export function NotePreviewModal({ note, onClose }: NotePreviewModalProps) {
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.95, y: 20 }}
+        initial={{ scale: 0.97, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-white rounded-4xl shadow-2xl p-8 max-w-2xl w-full max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-3xl shadow-2xl flex flex-col w-full max-w-3xl max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-5">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">{note.topicName}</h3>
-            <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
-              <FileText className="w-3.5 h-3.5" /> Podgląd notatki
-              <Badge variant="green">Zaakceptowana</Badge>
-            </p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-gray-100 cursor-pointer">
+        {/* Toolbar */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <FileText className="w-4 h-4 text-violet-500" />
+          <span className="font-semibold text-gray-800 text-sm flex-1 truncate">{note.topicName}</span>
+          <Badge variant="green">Zaakceptowana</Badge>
+          <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-gray-100 cursor-pointer ml-1">
             <XCircle className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
-        <div className="mb-5">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block">Streszczenie</label>
-          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 text-sm text-gray-700 leading-relaxed">
-            {note.summary}
+        {/* Document */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-10 py-8 max-w-2xl mx-auto">
+            <DocRenderer content={note.content} />
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Kluczowe pojęcia</label>
-          <div className="space-y-2">
-            {note.concepts.map((c, i) => (
-              <div key={i} className="flex gap-3 p-3 bg-violet-50 rounded-2xl">
-                <div className="font-semibold text-sm text-violet-700 min-w-[140px]">{c.term}</div>
-                <div className="text-sm text-gray-600">{c.definition}</div>
-              </div>
-            ))}
-          </div>
+        <div className="flex px-6 py-4 border-t border-gray-100 flex-shrink-0">
+          <Button variant="secondary" size="sm" onClick={onClose}>Zamknij</Button>
         </div>
-
-        <Button variant="secondary" size="md" onClick={onClose}>Zamknij</Button>
       </motion.div>
     </motion.div>
   );

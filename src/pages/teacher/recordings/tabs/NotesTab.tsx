@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Mic, Clock, FileText, CheckCircle2, Share2, Trash2,
-  Headphones, Sparkles,
+  Mic, Clock, FileText, CheckCircle2, Share2, Trash2, Headphones,
 } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { Badge } from '../../../../components/ui/Badge';
@@ -73,21 +72,13 @@ function NoteCard({ rec, note, onDelete }: NoteCardProps) {
           }
         </div>
 
-        {/* Note summary preview */}
+        {/* Document excerpt */}
         <div className="px-5 py-3 bg-violet-50/40 border-t border-violet-100">
           <div className="flex items-start gap-2">
             <FileText className="w-3.5 h-3.5 text-violet-400 mt-0.5 flex-shrink-0" />
-            <p className="text-xs text-gray-600 line-clamp-2">{note.summary}</p>
-          </div>
-          <div className="flex gap-2 mt-2 flex-wrap">
-            {note.concepts.slice(0, 3).map((c, i) => (
-              <span key={i} className="text-xs bg-violet-100 text-violet-700 px-2 py-0.5 rounded-lg font-medium">
-                {c.term}
-              </span>
-            ))}
-            {note.concepts.length > 3 && (
-              <span className="text-xs text-gray-400">+{note.concepts.length - 3} więcej</span>
-            )}
+            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+              {note.content.split('\n\n').slice(1).find(p => p.trim().length > 80) ?? note.content.split('\n\n')[1]}
+            </p>
           </div>
         </div>
 
