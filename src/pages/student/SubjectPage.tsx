@@ -617,12 +617,289 @@ function TabTasksAndExams({ subject }: { subject: string }) {
   );
 }
 
-function TabStudyLab({ subject: _subject }: { subject: string }) {
+// ─── Tab 3: Study Lab ─────────────────────────────────────────────────────────
+
+type StudyMode = 'menu' | 'flashcards' | 'quiz' | 'blurting';
+
+interface Flashcard { front: string; back: string; topic: string; }
+
+function generateFlashcards(lessons: StudentLesson[]): Flashcard[] {
+  const cards: Flashcard[] = [];
+  for (const l of lessons) {
+    if (!l.noteContent) continue;
+    let section = '';
+    for (const line of l.noteContent.split('\n')) {
+      if (line.startsWith('## ')) { section = line.slice(3); }
+      else if (line.startsWith('- ') && section) {
+        cards.push({ front: `${l.topicName} – ${section}`, back: line.slice(2), topic: l.topicName });
+      }
+    }
+  }
+  return cards;
+}
+
+// Flashcard sub-mode
+function FlashcardMode({ lessons, onBack }: { lessons: StudentLesson[]; onBack: () => void }) {
+  const cards = useMemo(() => generateFlashcards(lessons), [lessons]);
+  const [idx,    setIdx]    = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [known,   setKnown]   = useState<Set<number>>(new Set());
+
+  if (!cards.length)
+    return (
+      <div className="text-center py-12">
+        <Brain className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+        <p className="text-gray-500 text-sm">Brak notatek do wygenerowania fiszek.</p>
+        <button onClick={onBack} className="mt-4 text-sm text-sky-500 cursor-pointer">← Wróć</button>
+      </div>
+    );
+
+  const card = cards[idx];
+  const next = () => { setFlipped(false); setIdx(i => (i + 1) % cards.length); };
+  const prev = () => { setFlipped(false); setIdx(i => (i - 1 + cards.length) % cards.length); };
+  const markKnown = () => { setKnown(s => { const n = new Set(s); n.has(idx) ? n.delete(idx) : n.add(idx); return n; }); next(); };
+
   return (
-    <Card padding="lg" className="text-center py-10">
-      <Brain className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-      <p className="text-gray-500 text-sm">Study Lab – wkrótce dostępny</p>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">← Fiszki</button>
+        <span className="text-xs text-gray-400">{idx + 1}/{cards.length} · {known.size} znam</span>
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-full bg-violet-400 rounded-full transition-all" style={{ width: `${((idx + 1) / cards.length) * 100}%` }} />
+      </div>
+      <motion.div
+        key={`${idx}-${flipped}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={() => setFlipped(f => !f)}
+        className={`cursor-pointer rounded-3xl p-8 min-h-[200px] flex flex-col items-center justify-center text-center border-2 transition-colors ${
+          flipped ? 'bg-violet-50 border-violet-200' : 'bg-white border-gray-100'
+        }`}
+      >
+        <span className="text-xs text-gray-400 uppercase tracking-wider mb-4">
+          {flipped ? 'Odpowiedź' : 'Pytanie'} · {card.topic}
+        </span>
+        <p className={`font-bold text-lg ${flipped ? 'text-violet-700' : 'text-gray-800'}`}>
+          {flipped ? card.back : card.front}
+        </p>
+        <span className="mt-4 text-xs text-gray-400">
+          Kliknij, aby {flipped ? 'zobaczyć pytanie' : 'zobaczyć odpowiedź'}
+        </span>
+      </motion.div>
+      <div className="flex gap-2">
+        <button onClick={prev} className="flex-1 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold cursor-pointer min-h-[44px]">← Poprzednia</button>
+        <button onClick={markKnown} className={`flex-1 py-3 rounded-2xl text-sm font-semibold cursor-pointer min-h-[44px] transition-colors ${
+          known.has(idx) ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+        }`}>{known.has(idx) ? '✓ Znam' : 'Znam! →'}</button>
+        <button onClick={next} className="flex-1 py-3 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold cursor-pointer min-h-[44px]">Następna →</button>
+      </div>
+    </div>
+  );
+}
+
+// Quiz sub-mode (mock questions generated from lesson topics)
+const MOCK_QUESTIONS = [
+  { q: 'Co oznacza zapis ax + b = 0?', opts: ['Równanie kwadratowe','Równanie liniowe','Nierówność','Funkcja'], correct: 1, topic: 'Równania liniowe' },
+  { q: 'Ile wynosi 2³ · 2²?',           opts: ['2⁵','2⁶','4⁵','8'],                                           correct: 0, topic: 'Potęgi' },
+  { q: 'NWW(4, 6) wynosi:',             opts: ['2','12','24','6'],                                             correct: 1, topic: 'Ułamki' },
+  { q: '1% to:',                        opts: ['1/10','1/100','1/1000','1/50'],                                correct: 1, topic: 'Procenty' },
+];
+
+function QuizMode({ onBack }: { onBack: () => void }) {
+  const [cur,      setCur]      = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [score,    setScore]    = useState(0);
+  const [done,     setDone]     = useState(false);
+
+  const q = MOCK_QUESTIONS[cur];
+
+  const pick = (i: number) => {
+    if (selected !== null) return;
+    setSelected(i);
+    if (i === q.correct) setScore(s => s + 1);
+  };
+
+  const next = () => {
+    if (cur + 1 >= MOCK_QUESTIONS.length) { setDone(true); }
+    else { setCur(c => c + 1); setSelected(null); }
+  };
+
+  if (done) return (
+    <div className="text-center py-8 space-y-4">
+      <div className="w-16 h-16 rounded-full bg-violet-100 flex items-center justify-center mx-auto">
+        <Target className="w-8 h-8 text-violet-500" />
+      </div>
+      <p className="text-2xl font-bold text-gray-800">{score}/{MOCK_QUESTIONS.length}</p>
+      <p className="text-gray-500 text-sm">
+        {score === MOCK_QUESTIONS.length ? 'Perfekcyjnie! 🎉' : score >= MOCK_QUESTIONS.length * 0.7 ? 'Świetnie! 👍' : 'Ćwicz dalej! 💪'}
+      </p>
+      <button
+        onClick={() => { setCur(0); setSelected(null); setScore(0); setDone(false); }}
+        className="px-6 py-2.5 rounded-2xl bg-violet-500 hover:bg-violet-600 text-white text-sm font-semibold cursor-pointer min-h-[44px]"
+      >Zacznij od nowa</button>
+      <button onClick={onBack} className="block mx-auto text-sm text-gray-500 cursor-pointer">← Wróć</button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">← Quiz</button>
+        <span className="text-xs text-gray-400">{cur + 1}/{MOCK_QUESTIONS.length} · {score} pkt</span>
+      </div>
+      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-full bg-violet-400 rounded-full transition-all" style={{ width: `${((cur + 1) / MOCK_QUESTIONS.length) * 100}%` }} />
+      </div>
+      <div className="bg-white rounded-3xl border-2 border-gray-100 p-6">
+        <span className="text-xs text-gray-400">{q.topic}</span>
+        <p className="font-bold text-gray-800 text-base mt-2 mb-6">{q.q}</p>
+        <div className="space-y-2">
+          {q.opts.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => pick(i)}
+              className={`w-full text-left px-4 py-3 rounded-2xl text-sm font-medium transition-all cursor-pointer min-h-[44px] border-2 ${
+                selected === null    ? 'bg-gray-50 hover:bg-violet-50 hover:border-violet-200 border-gray-100' :
+                i === q.correct      ? 'bg-emerald-50 border-emerald-400 text-emerald-700' :
+                i === selected       ? 'bg-red-50 border-red-400 text-red-700' :
+                                       'bg-gray-50 border-gray-100 opacity-50'
+              }`}
+            >{opt}</button>
+          ))}
+        </div>
+      </div>
+      {selected !== null && (
+        <button onClick={next} className="w-full py-3 rounded-2xl bg-violet-500 hover:bg-violet-600 text-white text-sm font-semibold cursor-pointer min-h-[44px]">
+          {cur + 1 >= MOCK_QUESTIONS.length ? 'Zakończ' : 'Następne →'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// Blurting sub-mode
+function BlurtingMode({ lessons, onBack }: { lessons: StudentLesson[]; onBack: () => void }) {
+  const withNotes = lessons.filter(l => l.noteContent);
+  const [topic,    setTopic]    = useState<StudentLesson | null>(withNotes[0] ?? null);
+  const [text,     setText]     = useState('');
+  const [revealed, setRevealed] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer">← Blurting</button>
+        {withNotes.length > 1 && (
+          <select
+            value={topic?.id ?? ''}
+            onChange={e => { setTopic(withNotes.find(l => l.id === e.target.value) ?? null); setText(''); setRevealed(false); }}
+            className="text-xs border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-violet-300 cursor-pointer"
+          >
+            {withNotes.map(l => <option key={l.id} value={l.id}>{l.topicName}</option>)}
+          </select>
+        )}
+      </div>
+      <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4 flex items-start gap-2">
+        <Brain className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-bold text-violet-800">Metoda blurtingu</p>
+          <p className="text-xs text-violet-600 mt-0.5">Zamknij notatki i wpisz wszystko, co pamiętasz. Potem porównaj z oryginałem.</p>
+        </div>
+      </div>
+      {topic && (
+        <div>
+          <p className="text-sm font-bold text-gray-700 mb-2">{topic.topicName}</p>
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Wpisz wszystko, co pamiętasz… bez zaglądania do notatek!"
+            className="w-full h-40 px-4 py-3 bg-white border-2 border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none"
+          />
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => setRevealed(r => !r)}
+              className="flex-1 py-2.5 rounded-2xl bg-violet-500 hover:bg-violet-600 text-white text-sm font-semibold cursor-pointer min-h-[44px]"
+            >
+              {revealed ? 'Ukryj oryginał' : 'Pokaż oryginał'}
+            </button>
+            <button
+              onClick={() => { setText(''); setRevealed(false); }}
+              className="py-2.5 px-4 rounded-2xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold cursor-pointer min-h-[44px]"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+          <AnimatePresence>
+            {revealed && topic.noteContent && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-3 p-4 bg-gray-50 border border-gray-200 rounded-2xl"
+              >
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Oryginalna notatka</p>
+                {renderMarkdown(topic.noteContent)}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Study Lab main menu
+function TabStudyLab({ subject }: { subject: string }) {
+  const lessons = mockStudentLessons.filter(l => l.subject === subject);
+  const [mode, setMode] = useState<StudyMode>('menu');
+
+  if (mode === 'flashcards') return <FlashcardMode lessons={lessons} onBack={() => setMode('menu')} />;
+  if (mode === 'quiz')       return <QuizMode       onBack={() => setMode('menu')} />;
+  if (mode === 'blurting')   return <BlurtingMode   lessons={lessons} onBack={() => setMode('menu')} />;
+
+  const withNotes = lessons.filter(l => l.noteContent).length;
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-gradient-to-br from-violet-500 to-purple-700 rounded-3xl p-5 text-white">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-4 h-4" />
+          <span className="font-bold text-sm">Study Lab</span>
+        </div>
+        <p className="text-xs text-violet-200">Automatycznie generowane ćwiczenia z Twoich notatek lekcyjnych</p>
+        <div className="mt-3 flex items-center gap-3 text-xs text-violet-200">
+          <span>{withNotes} notatek do nauki</span>
+          <span className="text-violet-300">·</span>
+          <span>{lessons.length} lekcji</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3">
+        {[
+          { id: 'flashcards' as StudyMode, icon: Zap,    title: 'Fiszki',   desc: 'Aktywne przypominanie – pojęcia i definicje z notatek',    color: 'bg-sky-50 border-sky-200',     iconCls: 'bg-sky-100 text-sky-600',     badge: 'Popularne',   badgeCls: 'bg-sky-100 text-sky-600'     },
+          { id: 'quiz'       as StudyMode, icon: Target,  title: 'Quiz',     desc: 'Pytania jednokrotnego wyboru oparte na materiale lekcyjnym', color: 'bg-violet-50 border-violet-200', iconCls: 'bg-violet-100 text-violet-600', badge: null,          badgeCls: ''                            },
+          { id: 'blurting'   as StudyMode, icon: Brain,   title: 'Blurting', desc: 'Zapisz wszystko, co pamiętasz – porównaj z notatką',         color: 'bg-emerald-50 border-emerald-200', iconCls: 'bg-emerald-100 text-emerald-600', badge: 'Skuteczne', badgeCls: 'bg-emerald-100 text-emerald-600' },
+        ].map(({ id, icon: Icon, title, desc, color, iconCls, badge, badgeCls }) => (
+          <button
+            key={id}
+            onClick={() => setMode(id)}
+            className={`flex items-center gap-4 p-4 rounded-2xl border-2 ${color} text-left cursor-pointer transition-all hover:shadow-sm min-h-[44px]`}
+          >
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${iconCls}`}>
+              <Icon className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="font-bold text-gray-800 text-sm">{title}</span>
+                {badge && <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${badgeCls}`}>{badge}</span>}
+              </div>
+              <p className="text-xs text-gray-500">{desc}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
