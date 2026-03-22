@@ -1,6 +1,7 @@
 import type {
   Teacher, Class, CurriculumUnit, CurriculumTopic, TopicStatus,
-  Recording, Note, SharedMaterial, GeneratedTest, ScheduleTemplate
+  Recording, Note, SharedMaterial, GeneratedTest, ScheduleTemplate,
+  Student, StudentLesson, StudentExam
 } from '../types';
 
 // ─── Teacher ─────────────────────────────────────────────────────────────────
@@ -522,3 +523,202 @@ export function formatDuration(seconds: number): string {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
+
+// ─── Student ──────────────────────────────────────────────────────────────────
+
+export const mockStudent: Student = {
+  id: 's1',
+  name: 'Kacper Wiśniewski',
+  email: 'k.wisniewski@szkola.pl',
+  className: '7A',
+  classId: 'c3',
+  grade: 7,
+  schoolType: 'primary',
+};
+
+export const mockStudentLessons: StudentLesson[] = [
+  {
+    id: 'sl1',
+    date: '2026-03-20',
+    subject: 'Matematyka',
+    topicName: 'Równania liniowe z jedną niewiadomą',
+    unitName: 'Wyrażenia algebraiczne',
+    teacherName: 'Anna Kowalska',
+    className: '7A',
+    durationMinutes: 45,
+    noteId: 'n1',
+    noteContent: `# Równania liniowe z jedną niewiadomą
+
+## Definicja
+Równanie liniowe to równanie postaci **ax + b = 0**, gdzie a ≠ 0.
+
+## Metody rozwiązywania
+1. Przenosimy wyrazy z niewiadomą na lewą stronę
+2. Przenosimy liczby na prawą stronę
+3. Dzielimy obie strony przez współczynnik przy x
+
+## Przykłady
+- 2x + 6 = 0 → x = –3
+- 3x – 9 = 6 → x = 5
+- 5x + 2 = 3x – 4 → 2x = –6 → x = –3
+
+## Sprawdzanie rozwiązania
+Zawsze wstawiamy wynik z powrotem do równania i sprawdzamy, czy obie strony są równe.`,
+    recordingId: 'r3',
+    recordingDurationSeconds: 2687,
+    thumbnailColor: '#bae6fd',
+    likes: 14,
+    hasLiked: false,
+    comments: [
+      { id: 'sc1', studentName: 'Zofia Nowak', text: 'Super notatka, wszystko jasne!', createdAt: '2026-03-20T14:30:00' },
+      { id: 'sc2', studentName: 'Tomek Barański', text: 'Czy te przykłady będą na sprawdzianie?', createdAt: '2026-03-21T09:15:00' },
+    ],
+  },
+  {
+    id: 'sl2',
+    date: '2026-03-18',
+    subject: 'Matematyka',
+    topicName: 'Potęgi – własności i zastosowania',
+    unitName: 'Liczby i działania',
+    teacherName: 'Anna Kowalska',
+    className: '7A',
+    durationMinutes: 45,
+    noteId: 'n2',
+    noteContent: `# Potęgi – własności i zastosowania
+
+## Definicja
+Potęga a^n = a × a × ... × a (n razy), gdzie a to podstawa, n to wykładnik.
+
+## Własności potęg
+- a^m · a^n = a^(m+n)
+- a^m / a^n = a^(m−n)
+- (a^m)^n = a^(m·n)
+- (a·b)^n = a^n · b^n
+- a^0 = 1 (dla a ≠ 0)
+- a^(−n) = 1/a^n
+
+## Przykłady
+- 2^3 · 2^4 = 2^7 = 128
+- 3^5 / 3^2 = 3^3 = 27
+- (2^3)^2 = 2^6 = 64`,
+    recordingId: 'r4',
+    recordingDurationSeconds: 2340,
+    thumbnailColor: '#d1fae5',
+    likes: 9,
+    hasLiked: true,
+    comments: [
+      { id: 'sc3', studentName: 'Kacper Wiśniewski', text: 'Dzięki, bardzo pomocne!', createdAt: '2026-03-18T16:00:00', isOwn: true },
+    ],
+  },
+  {
+    id: 'sl3',
+    date: '2026-03-14',
+    subject: 'Matematyka',
+    topicName: 'Ułamki – dodawanie i odejmowanie',
+    unitName: 'Liczby i działania',
+    teacherName: 'Anna Kowalska',
+    className: '7A',
+    durationMinutes: 45,
+    noteId: 'n3',
+    noteContent: `# Ułamki – dodawanie i odejmowanie
+
+## Ułamki zwykłe
+Aby dodać lub odjąć ułamki, trzeba sprowadzić je do **wspólnego mianownika**.
+
+## NWW (Najmniejsza Wspólna Wielokrotność)
+Znajdź NWW mianowników, rozszerz ułamki, a następnie dodaj/odejmij liczniki.
+
+## Przykłady
+- 1/3 + 1/4 = 4/12 + 3/12 = 7/12
+- 5/6 – 1/4 = 10/12 – 3/12 = 7/12`,
+    thumbnailColor: '#fde68a',
+    likes: 5,
+    hasLiked: false,
+    comments: [],
+  },
+  {
+    id: 'sl4',
+    date: '2026-03-11',
+    subject: 'Matematyka',
+    topicName: 'Geometria – pola wielokątów',
+    unitName: 'Geometria płaska',
+    teacherName: 'Anna Kowalska',
+    className: '7A',
+    durationMinutes: 45,
+    thumbnailColor: '#fecdd3',
+    likes: 7,
+    hasLiked: false,
+    comments: [
+      { id: 'sc4', studentName: 'Marta Kowalczyk', text: 'Kiedy będzie notatka do tej lekcji?', createdAt: '2026-03-12T10:00:00' },
+    ],
+  },
+  {
+    id: 'sl5',
+    date: '2026-03-07',
+    subject: 'Matematyka',
+    topicName: 'Proporcje i procenty',
+    unitName: 'Liczby i działania',
+    teacherName: 'Anna Kowalska',
+    className: '7A',
+    durationMinutes: 45,
+    noteId: 'n5',
+    noteContent: `# Proporcje i procenty
+
+## Procent
+1% = 1/100 = 0,01
+
+## Obliczanie procentu z liczby
+p% z liczby n = (p × n) / 100
+
+## Podwyżka i obniżka
+- Podwyżka o p%: nowa wartość = n × (1 + p/100)
+- Obniżka o p%: nowa wartość = n × (1 – p/100)
+
+## Przykłady
+- 20% z 350 = 70
+- Podwyżka o 15%: 200 × 1,15 = 230`,
+    thumbnailColor: '#e9d5ff',
+    likes: 12,
+    hasLiked: false,
+    comments: [],
+  },
+];
+
+export const mockStudentExams: StudentExam[] = [
+  {
+    id: 'se1',
+    date: '2026-03-28',
+    subject: 'Matematyka',
+    topicNames: ['Równania liniowe', 'Układy równań', 'Nierówności'],
+    scope: 'Dział: Wyrażenia algebraiczne (tematy 1–4)',
+    className: '7A',
+    teacherName: 'Anna Kowalska',
+    durationMinutes: 45,
+    room: '12',
+    color: '#bae6fd',
+  },
+  {
+    id: 'se2',
+    date: '2026-04-08',
+    subject: 'Matematyka',
+    topicNames: ['Potęgi', 'Pierwiastki', 'Logarytmy'],
+    scope: 'Dział: Liczby i działania (tematy 2–4)',
+    className: '7A',
+    teacherName: 'Anna Kowalska',
+    durationMinutes: 45,
+    room: '12',
+    color: '#d1fae5',
+  },
+  {
+    id: 'se3',
+    date: '2026-04-24',
+    subject: 'Matematyka',
+    topicNames: ['Pola wielokątów', 'Twierdzenie Pitagorasa', 'Okrąg i koło'],
+    scope: 'Dział: Geometria płaska (cały dział)',
+    className: '7A',
+    teacherName: 'Anna Kowalska',
+    durationMinutes: 45,
+    room: '7',
+    color: '#fde68a',
+  },
+];

@@ -192,3 +192,56 @@ export interface GeneratedTest {
   createdAt: string;
   title: string;
 }
+
+// ─── Student ──────────────────────────────────────────────────────────────────
+
+export interface Student {
+  id: string;
+  name: string;
+  email: string;
+  className: string;
+  classId: string;
+  grade: number;
+  schoolType: 'primary' | 'high';
+  avatar?: string;
+}
+
+export interface StudentLesson {
+  id: string;
+  date: string; // ISO
+  subject: string;
+  topicName: string;
+  unitName: string;
+  teacherName: string;
+  className: string;
+  durationMinutes: number;
+  noteId?: string;
+  noteContent?: string;
+  recordingId?: string;
+  recordingDurationSeconds?: number;
+  thumbnailColor: string;
+  likes: number;
+  hasLiked: boolean;
+  comments: StudentComment[];
+}
+
+export interface StudentComment {
+  id: string;
+  studentName: string;
+  text: string;
+  createdAt: string;
+  isOwn?: boolean;
+}
+
+export interface StudentExam {
+  id: string;
+  date: string; // ISO
+  subject: string;
+  topicNames: string[];
+  scope: string;
+  className: string;
+  teacherName: string;
+  durationMinutes: number;
+  room?: string;
+  color: string;
+}
