@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { BookOpen, CalendarCheck, ThumbsUp, MessageCircle, Clock, ChevronRight } from 'lucide-react';
+import { BookOpen, CalendarCheck, ThumbsUp, MessageCircle, Clock, ChevronRight, ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
 import { useAuth } from '../../context/AuthContext';
-import { mockStudentLessons, mockStudentExams } from '../../data/mockData';
+import { mockStudentLessons, mockStudentExams, mockStudentHomework } from '../../data/mockData';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { pl } from 'date-fns/locale';
 
@@ -14,6 +14,8 @@ export function StudentDashboard() {
   const daysUntilExam = differenceInDays(parseISO(nextExam.date), new Date());
   const totalLikes = mockStudentLessons.reduce((s, l) => s + l.likes, 0);
   const totalComments = mockStudentLessons.reduce((s, l) => s + l.comments.length, 0);
+  const pendingHomework = mockStudentHomework.filter(h => !h.done).length;
+  const subjects = [...new Set(mockStudentLessons.map(l => l.subject))];
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -38,8 +40,8 @@ export function StudentDashboard() {
         {[
           { icon: BookOpen, label: 'Lekcje', value: mockStudentLessons.length, color: 'bg-sky-50 text-sky-600' },
           { icon: CalendarCheck, label: 'Egzaminy', value: mockStudentExams.length, color: 'bg-amber-50 text-amber-600' },
-          { icon: ThumbsUp, label: 'Łapki', value: totalLikes, color: 'bg-violet-50 text-violet-600' },
-          { icon: MessageCircle, label: 'Komentarze', value: totalComments, color: 'bg-emerald-50 text-emerald-600' },
+          { icon: ClipboardList, label: 'Zadania do zrobienia', value: pendingHomework, color: 'bg-violet-50 text-violet-600' },
+          { icon: MessageCircle, label: 'Pytania', value: totalComments, color: 'bg-emerald-50 text-emerald-600' },
         ].map(({ icon: Icon, label, value, color }) => (
           <Card key={label} padding="sm" className="text-center">
             <div className={`w-10 h-10 rounded-2xl ${color} flex items-center justify-center mx-auto mb-2`}>
@@ -49,6 +51,34 @@ export function StudentDashboard() {
             <div className="text-xs text-gray-500">{label}</div>
           </Card>
         ))}
+      </div>
+
+      {/* Quick subject access */}
+      <div>
+        <h2 className="font-bold text-gray-700 text-sm mb-3 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-sky-500" /> Moje przedmioty
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {subjects.map(subject => {
+            const count = mockStudentLessons.filter(l => l.subject === subject).length;
+            const hw = mockStudentHomework.filter(h => h.subject === subject && !h.done).length;
+            return (
+              <Link
+                key={subject}
+                to={`/student/subject/${encodeURIComponent(subject)}`}
+                className="group p-4 rounded-2xl bg-white border border-gray-100 hover:border-sky-200 hover:shadow-md transition-all"
+              >
+                <div className="font-bold text-gray-800 group-hover:text-sky-600 transition-colors text-sm mb-1">{subject}</div>
+                <div className="text-xs text-gray-500">{count} lekcji</div>
+                {hw > 0 && (
+                  <div className="mt-2 text-xs font-semibold text-violet-600 flex items-center gap-1">
+                    <ClipboardList className="w-3 h-3" /> {hw} zadań
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -99,7 +129,7 @@ export function StudentDashboard() {
             <h2 className="font-bold text-gray-800 flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-sky-500" /> Ostatnie lekcje
             </h2>
-            <Link to="/student/lessons" className="text-xs text-sky-600 hover:underline flex items-center gap-1">
+            <Link to={`/student/subject/${encodeURIComponent(recentLessons[0]?.subject ?? 'Matematyka')}`} className="text-xs text-sky-600 hover:underline flex items-center gap-1">
               Wszystkie <ChevronRight className="w-3 h-3" />
             </Link>
           </div>
@@ -107,7 +137,7 @@ export function StudentDashboard() {
             {recentLessons.map(lesson => (
               <Link
                 key={lesson.id}
-                to="/student/lessons"
+                to={`/student/subject/${encodeURIComponent(lesson.subject)}`}
                 className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-gray-50 transition-colors group"
               >
                 <div

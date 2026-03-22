@@ -12,9 +12,9 @@ import { Tests } from './pages/teacher/Tests';
 import { Profile } from './pages/teacher/Profile';
 // Student pages
 import { StudentDashboard } from './pages/student/Dashboard';
-import { StudentLessons } from './pages/student/Lessons';
 import { StudentExams } from './pages/student/Exams';
 import { StudentProfile } from './pages/student/Profile';
+import { SubjectPage } from './pages/student/SubjectPage';
 
 function AppRoutes() {
   const { isLoggedIn, role } = useAuth();
@@ -45,7 +45,7 @@ function AppRoutes() {
       {/* Student routes */}
       <Route path="/student" element={<StudentLayout />}>
         <Route index element={<StudentDashboard />} />
-        <Route path="lessons" element={<StudentLessons />} />
+        <Route path="subject/:subject" element={<SubjectPage />} />
         <Route path="exams" element={<StudentExams />} />
         <Route path="profile" element={<StudentProfile />} />
       </Route>
