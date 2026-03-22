@@ -136,19 +136,298 @@ function MockPlayer({
   );
 }
 
-// ─── Placeholder tabs (filled in later commits) ───────────────────────────────
+// ─── Tab 1: Lekcje i Notatki ─────────────────────────────────────────────────
+
+interface TimestampNote { ts: number; text: string; }
+
+function LessonCard({ lesson }: { lesson: StudentLesson }) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [playerOpen,   setPlayerOpen]   = useState(false);
+  const [comments,  setComments]  = useState<StudentComment[]>(lesson.comments);
+  const [newComment, setNewComment] = useState('');
+  const [liked,     setLiked]     = useState(lesson.hasLiked);
+  const [likeCount, setLikeCount] = useState(lesson.likes);
+  const [noteOpen,  setNoteOpen]  = useState(false);
+  const [tsNotes,   setTsNotes]   = useState<TimestampNote[]>([]);
+  const [pendingTs, setPendingTs] = useState<number | null>(null);
+  const [tsText,    setTsText]    = useState('');
+
+  const fmtTs = (sec: number) =>
+    `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
+
+  const handleLike = () => {
+    setLiked(p => !p);
+    setLikeCount(c => liked ? c - 1 : c + 1);
+  };
+
+  const submitComment = () => {
+    if (!newComment.trim()) return;
+    setComments(p => [...p, {
+      id: `c-${Date.now()}`, studentName: 'anonim',
+      text: newComment.trim(), createdAt: new Date().toISOString(), isOwn: true,
+    }]);
+    setNewComment('');
+  };
+
+  const submitTsNote = () => {
+    if (!tsText.trim() || pendingTs === null) return;
+    setTsNotes(p => [...p, { ts: pendingTs, text: tsText.trim() }]);
+    setTsText('');
+    setPendingTs(null);
+  };
+
+  return (
+    <>
+      <AnimatePresence>
+        {noteOpen && lesson.noteContent && (
+          <NoteModal
+            content={lesson.noteContent}
+            topicName={lesson.topicName}
+            onClose={() => setNoteOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Blue left-border = "oficjalna" karta */}
+      <div
+        className="rounded-3xl bg-white shadow-card border border-white/80 border-l-4 overflow-hidden"
+        style={{ borderLeftColor: '#0ea5e9' }}
+      >
+        <div className="p-5">
+          {/* Header row */}
+          <div className="flex items-start gap-3">
+            <div
+              className="w-11 h-11 rounded-2xl flex-shrink-0 flex items-center justify-center"
+              style={{ backgroundColor: lesson.thumbnailColor }}
+            >
+              <GraduationCap className="w-5 h-5 text-white/80" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-400">
+                {format(parseISO(lesson.date), 'EEEE, d MMMM yyyy', { locale: pl })}
+              </p>
+              <p className="font-bold text-gray-800 text-sm mt-0.5">{lesson.topicName}</p>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <span className="text-xs text-gray-500">{lesson.unitName}</span>
+                <span className="text-gray-300 text-xs">·</span>
+                <span className="text-xs text-sky-500 font-medium flex items-center gap-0.5">
+                  <Clock className="w-3 h-3" /> {lesson.durationMinutes} min
+                </span>
+              </div>
+            </div>
+            <span className="text-xs px-2 py-0.5 bg-sky-50 text-sky-600 border border-sky-200 rounded-full font-medium flex-shrink-0">
+              Oficjalna
+            </span>
+          </div>
+
+          {/* Material buttons */}
+          <div className="flex items-center gap-2 mt-4 flex-wrap">
+            {lesson.noteId ? (
+              <button
+                onClick={() => setNoteOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
+              >
+                <FileText className="w-3.5 h-3.5" /> Otwórz notatkę
+              </button>
+            ) : (
+              <span className="text-xs text-gray-300 flex items-center gap-1">
+                <FileText className="w-3.5 h-3.5" /> Brak notatki
+              </span>
+            )}
+            {lesson.recordingId && lesson.recordingDurationSeconds && (
+              <button
+                onClick={() => setPlayerOpen(p => !p)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-100 hover:bg-violet-200 text-violet-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
+              >
+                <Play className="w-3.5 h-3.5" />
+                {playerOpen ? 'Ukryj nagranie' : 'Słuchaj'}
+              </button>
+            )}
+          </div>
+
+          {/* Inline audio player */}
+          <AnimatePresence>
+            {playerOpen && lesson.recordingDurationSeconds && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 space-y-2">
+                  <MockPlayer
+                    durationSeconds={lesson.recordingDurationSeconds}
+                    color={lesson.thumbnailColor}
+                    onTimestamp={t => { setPendingTs(t); setTsText(''); }}
+                  />
+                  {/* Timestamp annotation input */}
+                  <AnimatePresence>
+                    {pendingTs !== null && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="flex gap-2"
+                      >
+                        <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-sky-50 border border-sky-200 rounded-xl">
+                          <span className="text-xs text-sky-500 font-mono font-bold flex-shrink-0">
+                            {fmtTs(pendingTs)}
+                          </span>
+                          <input
+                            autoFocus
+                            value={tsText}
+                            onChange={e => setTsText(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && submitTsNote()}
+                            placeholder="Twoja adnotacja..."
+                            className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700"
+                          />
+                        </div>
+                        <button
+                          onClick={submitTsNote}
+                          disabled={!tsText.trim()}
+                          className="w-11 h-11 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white flex items-center justify-center cursor-pointer flex-shrink-0"
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {/* Saved annotations list */}
+                  {tsNotes.length > 0 && (
+                    <div className="space-y-1">
+                      {tsNotes.map((n, i) => (
+                        <div key={i} className="flex items-start gap-2 text-xs bg-sky-50 rounded-xl px-3 py-2">
+                          <span className="font-mono text-sky-500 font-bold flex-shrink-0">{fmtTs(n.ts)}</span>
+                          <span className="text-gray-700">{n.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Interaction bar – like + comment toggle */}
+          <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+            <button
+              onClick={handleLike}
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-all cursor-pointer px-3 py-2 rounded-xl min-h-[44px] ${
+                liked ? 'text-sky-600 bg-sky-50' : 'text-gray-400 hover:text-sky-500 hover:bg-gray-50'
+              }`}
+            >
+              <ThumbsUp className={`w-4 h-4 ${liked ? 'fill-sky-500 text-sky-500' : ''}`} />
+              {likeCount}
+            </button>
+            <button
+              onClick={() => setCommentsOpen(o => !o)}
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-sky-500 hover:bg-gray-50 transition-colors cursor-pointer px-3 py-2 rounded-xl min-h-[44px]"
+            >
+              <MessageCircle className="w-4 h-4" />
+              {comments.length}
+              {comments.length > 0 && (
+                commentsOpen
+                  ? <ChevronUp className="w-3.5 h-3.5 ml-0.5" />
+                  : <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Comments – collapsed by default */}
+          <AnimatePresence>
+            {commentsOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Pytania ({comments.length})
+                    </p>
+                    <span className="text-xs text-gray-400">Anonimowe</span>
+                  </div>
+                  {comments.map(c => (
+                    <div
+                      key={c.id}
+                      className={`p-3 rounded-2xl text-sm ${c.isOwn ? 'bg-sky-50 border border-sky-100' : 'bg-gray-50'}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`font-semibold text-xs ${c.isOwn ? 'text-sky-700' : 'text-gray-500'}`}>
+                          {c.isOwn ? 'Ty (anonimowo)' : 'Anonimowy uczeń'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {format(parseISO(c.createdAt), 'd MMM, HH:mm', { locale: pl })}
+                        </span>
+                      </div>
+                      <p className="text-gray-700">{c.text}</p>
+                    </div>
+                  ))}
+                  {comments.length === 0 && (
+                    <p className="text-xs text-gray-400">Nikt jeszcze nie zadał pytania. Śmiało!</p>
+                  )}
+                  <div className="flex gap-2 mt-1">
+                    <input
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && submitComment()}
+                      placeholder="Zadaj anonimowe pytanie..."
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                    />
+                    <button
+                      onClick={submitComment}
+                      disabled={!newComment.trim()}
+                      className="w-11 h-11 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white flex items-center justify-center cursor-pointer flex-shrink-0"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </>
+  );
+}
 
 function TabLessons({ subject }: { subject: string }) {
   const lessons = mockStudentLessons.filter(l => l.subject === subject);
+
   if (lessons.length === 0)
     return <p className="text-gray-400 text-sm text-center py-8">Brak lekcji z tego przedmiotu.</p>;
+
+  // Group by unit
+  const byUnit = new Map<string, StudentLesson[]>();
+  for (const l of lessons) {
+    if (!byUnit.has(l.unitName)) byUnit.set(l.unitName, []);
+    byUnit.get(l.unitName)!.push(l);
+  }
+
   return (
-    <div className="space-y-3">
-      {lessons.map(l => (
-        <Card key={l.id} padding="md">
-          <p className="font-bold text-sm text-gray-800">{l.topicName}</p>
-          <p className="text-xs text-gray-500">{l.unitName}</p>
-        </Card>
+    <div className="space-y-8">
+      {[...byUnit.entries()].map(([unit, list]) => (
+        <div key={unit}>
+          {/* Section divider */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-sky-100 flex items-center justify-center flex-shrink-0">
+              <Layers className="w-4 h-4 text-sky-600" />
+            </div>
+            <span className="text-sm font-bold text-gray-700">{unit}</span>
+            <span className="text-xs text-gray-400">
+              {list.length} {list.length === 1 ? 'lekcja' : list.length < 5 ? 'lekcje' : 'lekcji'}
+            </span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+          <div className="space-y-3">
+            {list.map(l => <LessonCard key={l.id} lesson={l} />)}
+          </div>
+        </div>
       ))}
     </div>
   );
