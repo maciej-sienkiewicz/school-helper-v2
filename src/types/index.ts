@@ -215,6 +215,7 @@ export interface StudentLesson {
   teacherName: string;
   className: string;
   durationMinutes: number;
+  topicId?: string;
   noteId?: string;
   noteContent?: string;
   recordingId?: string;

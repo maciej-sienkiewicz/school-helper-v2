@@ -546,6 +546,7 @@ export const mockStudentLessons: StudentLesson[] = [
     teacherName: 'Anna Kowalska',
     className: '7A',
     durationMinutes: 45,
+    topicId: 'tp4',
     noteId: 'n1',
     noteContent: `# Równania liniowe z jedną niewiadomą
 
@@ -583,6 +584,7 @@ Zawsze wstawiamy wynik z powrotem do równania i sprawdzamy, czy obie strony są
     teacherName: 'Anna Kowalska',
     className: '7A',
     durationMinutes: 45,
+    topicId: 'tp2',
     noteId: 'n2',
     noteContent: `# Potęgi – własności i zastosowania
 
@@ -619,6 +621,7 @@ Potęga a^n = a × a × ... × a (n razy), gdzie a to podstawa, n to wykładnik.
     teacherName: 'Anna Kowalska',
     className: '7A',
     durationMinutes: 45,
+    topicId: 'tp1',
     noteId: 'n3',
     noteContent: `# Ułamki – dodawanie i odejmowanie
 
@@ -645,6 +648,7 @@ Znajdź NWW mianowników, rozszerz ułamki, a następnie dodaj/odejmij liczniki.
     teacherName: 'Anna Kowalska',
     className: '7A',
     durationMinutes: 45,
+    topicId: 'tp13',
     thumbnailColor: '#fecdd3',
     likes: 7,
     hasLiked: false,
@@ -661,6 +665,7 @@ Znajdź NWW mianowników, rozszerz ułamki, a następnie dodaj/odejmij liczniki.
     teacherName: 'Anna Kowalska',
     className: '7A',
     durationMinutes: 45,
+    topicId: 'tp3',
     noteId: 'n5',
     noteContent: `# Proporcje i procenty
 
