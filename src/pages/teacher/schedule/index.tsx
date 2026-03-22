@@ -166,7 +166,7 @@ export function Schedule() {
             </Card>
           )}
 
-          <div className="lg:sticky lg:top-6">
+          <div className="flex flex-col gap-6">
             <LessonDetailPanel
               topic={lessonDetail?.topic ?? null}
               status={lessonDetail?.status}
@@ -185,16 +185,14 @@ export function Schedule() {
               }
               onScheduleTest={() => setScheduleTestModal(undefined)}
             />
+            <ScheduledExamsSection
+              exams={classExams}
+              onScheduleTest={() => setScheduleTestModal(undefined)}
+              onEditExam={exam => setScheduleTestModal(exam)}
+              onDeleteExam={id => setExamItems(prev => prev.filter(e => e.id !== id))}
+            />
           </div>
         </div>
-
-        {/* ── Zaplanowane egzaminy ────────────────────────────────────────── */}
-        <ScheduledExamsSection
-          exams={classExams}
-          onScheduleTest={() => setScheduleTestModal(undefined)}
-          onEditExam={exam => setScheduleTestModal(exam)}
-          onDeleteExam={id => setExamItems(prev => prev.filter(e => e.id !== id))}
-        />
       </motion.div>
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}

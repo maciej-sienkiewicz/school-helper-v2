@@ -1,10 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FlaskConical, Plus, Calendar, Pencil, Trash2,
-  Upload, FileQuestion,
+  FlaskConical, Plus, Calendar, Pencil, Trash2, Upload, FileQuestion,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
-import { SectionTitle } from '../../../components/ui/Card';
 import type { ScheduledExam } from './ScheduleTestModal';
 
 interface Props {
@@ -18,112 +16,95 @@ export function ScheduledExamsSection({ exams, onScheduleTest, onEditExam, onDel
   const sorted = exams.slice().sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div className="bg-white rounded-3xl border border-white/80 shadow-card p-6">
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-card p-5">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <SectionTitle icon={<FlaskConical className="w-4 h-4" />}>
-          Zaplanowane egzaminy
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-1.5">
+          <FlaskConical className="w-3.5 h-3.5 text-gray-400" />
+          <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+            Zaplanowane egzaminy
+          </span>
           {exams.length > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-sky-100 text-sky-600 rounded-full text-xs font-bold">
+            <span className="px-1.5 py-0.5 bg-sky-100 text-sky-600 rounded-full text-[10px] font-bold">
               {exams.length}
             </span>
           )}
-        </SectionTitle>
-        <Button
-          variant="primary"
-          size="sm"
-          icon={<Plus className="w-3.5 h-3.5" />}
+        </div>
+        <button
           onClick={onScheduleTest}
+          className="flex items-center gap-1 text-xs font-semibold text-sky-600 hover:text-sky-700 cursor-pointer transition-colors"
         >
-          Zaplanuj egzamin
-        </Button>
+          <Plus className="w-3.5 h-3.5" /> Zaplanuj
+        </button>
       </div>
 
       {/* Empty state */}
       {exams.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center mb-3">
-            <FileQuestion className="w-6 h-6 text-sky-200" />
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <div className="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center mb-2">
+            <FileQuestion className="w-5 h-5 text-sky-200" />
           </div>
-          <p className="text-sm text-gray-400">Brak zaplanowanych egzaminów dla tej klasy</p>
-          <p className="text-xs text-gray-300 mt-1">Kliknij „Zaplanuj egzamin", aby dodać pierwszy</p>
+          <p className="text-xs text-gray-400">Brak zaplanowanych egzaminów</p>
         </div>
       )}
 
-      {/* Exam cards grid */}
-      {exams.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-          <AnimatePresence>
-            {sorted.map(exam => {
-              const dateLabel = new Date(exam.date).toLocaleDateString('pl-PL', {
-                weekday: 'short', day: 'numeric', month: 'long', year: 'numeric',
-              });
-              const isUpcoming = new Date(exam.date) >= new Date(new Date().toDateString());
+      {/* List */}
+      <div className="space-y-2">
+        <AnimatePresence>
+          {sorted.map(exam => {
+            const dateLabel = new Date(exam.date).toLocaleDateString('pl-PL', {
+              day: 'numeric', month: 'short', year: 'numeric',
+            });
+            const isUpcoming = new Date(exam.date) >= new Date(new Date().toDateString());
 
-              return (
-                <motion.div
-                  key={exam.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="group relative flex flex-col gap-3 p-4 rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50/60 to-white hover:border-sky-200 hover:shadow-sm transition-all"
-                >
-                  {/* Source badge */}
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      exam.source === 'generator'
-                        ? 'bg-violet-100 text-violet-600'
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {exam.source === 'generator'
-                        ? <><FlaskConical className="w-2.5 h-2.5" /> Generator</>
-                        : <><Upload className="w-2.5 h-2.5" /> Z pliku</>}
-                    </span>
+            return (
+              <motion.div
+                key={exam.id}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-start gap-3 p-3 rounded-2xl border border-sky-100 bg-sky-50/40 group/exam"
+              >
+                <div className="w-7 h-7 rounded-xl bg-sky-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {exam.source === 'generator'
+                    ? <FlaskConical className="w-3.5 h-3.5 text-sky-500" />
+                    : <Upload className="w-3.5 h-3.5 text-sky-500" />}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-sm font-semibold text-gray-800 leading-tight">{exam.testTitle}</span>
                     {isUpcoming && (
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
                         Nadchodzący
                       </span>
                     )}
                   </div>
-
-                  {/* Title */}
-                  <div>
-                    <p className="text-sm font-bold text-gray-800 leading-snug">{exam.testTitle}</p>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-xs text-gray-400">
-                      <Calendar className="w-3 h-3 flex-shrink-0" />
-                      <span>{dateLabel}</span>
-                    </div>
+                  <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+                    <Calendar className="w-3 h-3" /> {dateLabel}
                   </div>
+                </div>
 
-                  {/* Topics count */}
-                  {exam.topicIds.length > 0 && (
-                    <div className="text-xs text-sky-500 font-medium">
-                      {exam.topicIds.length} {exam.topicIds.length === 1 ? 'temat' : exam.topicIds.length < 5 ? 'tematy' : 'tematów'}
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-1.5 pt-1 border-t border-sky-100/80">
-                    <button
-                      onClick={() => onEditExam(exam)}
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-sky-600 transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-sky-50"
-                    >
-                      <Pencil className="w-3 h-3" /> Edytuj
-                    </button>
-                    <button
-                      onClick={() => onDeleteExam(exam.id)}
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer px-2 py-1 rounded-lg hover:bg-red-50"
-                    >
-                      <Trash2 className="w-3 h-3" /> Usuń
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      )}
+                <div className="flex items-center gap-1 opacity-0 group-hover/exam:opacity-100 transition-opacity flex-shrink-0">
+                  <button
+                    onClick={() => onEditExam(exam)}
+                    className="w-6 h-6 rounded-lg hover:bg-sky-100 flex items-center justify-center text-gray-300 hover:text-sky-500 transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => onDeleteExam(exam.id)}
+                    className="w-6 h-6 rounded-lg hover:bg-red-100 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
