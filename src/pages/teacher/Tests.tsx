@@ -310,11 +310,21 @@ function CountInput({ value, onChange, min = 0, max = 10 }: { value: number; onC
   );
 }
 
-function QuestionEditor({ question, onChange }: {
+function QuestionEditor({ question, onChange, onRegenerate }: {
   question: TestQuestion;
   onChange: (q: TestQuestion) => void;
+  onRegenerate?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+
+  const handleRegenerate = async () => {
+    if (!onRegenerate || regenerating) return;
+    setRegenerating(true);
+    await new Promise(r => setTimeout(r, 1500));
+    onRegenerate();
+    setRegenerating(false);
+  };
 
   const typeLabels: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     open: { label: 'Otwarte', color: '#ddd6fe', icon: <Type className="w-3 h-3 text-violet-600" /> },
@@ -408,9 +418,21 @@ function QuestionEditor({ question, onChange }: {
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-gray-500">Punkty:</label>
-              <CountInput value={question.points} onChange={v => onChange({ ...question, points: v })} min={1} max={10} />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-gray-500">Punkty:</label>
+                <CountInput value={question.points} onChange={v => onChange({ ...question, points: v })} min={1} max={10} />
+              </div>
+              {onRegenerate && (
+                <button
+                  onClick={handleRegenerate}
+                  disabled={regenerating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 disabled:opacity-60 disabled:cursor-not-allowed transition-all cursor-pointer"
+                >
+                  <RefreshCw className={`w-3 h-3 ${regenerating ? 'animate-spin' : ''}`} />
+                  {regenerating ? 'Generuję...' : 'Wygeneruj nową treść pytania'}
+                </button>
+              )}
             </div>
           </motion.div>
         )}
@@ -472,6 +494,14 @@ function ExistingTestCard({ test }: { test: GeneratedTest }) {
                 key={q.id}
                 question={q}
                 onChange={updated => setQuestions(prev => prev.map(p => p.id === updated.id ? updated : p))}
+                onRegenerate={() => {
+                  // Symulacja: dodaj sufix do treści pytania żeby pokazać zmianę
+                  setQuestions(prev => prev.map(p =>
+                    p.id === q.id
+                      ? { ...p, question: p.question.replace(/ \[v\d+\]$/, '') + ` [v${Date.now() % 100}]` }
+                      : p
+                  ));
+                }}
               />
             ))}
           </motion.div>
