@@ -5,7 +5,7 @@ import {
   ChevronDown, ChevronUp, Send, Layers, BookOpen, CheckCircle2,
   Circle, Mic, ClipboardList,
 } from 'lucide-react';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { mockStudentLessons, mockStudentHomework, mockUnits, mockTopics, mockTopicStatuses } from '../../../data/mockData';
 import type { StudentLesson, StudentComment, StudentHomework } from '../../../types';
@@ -22,32 +22,10 @@ function HomeworkBadge({
   done: boolean;
   onToggle: () => void;
 }) {
-  const days = differenceInDays(parseISO(hw.dueDate), new Date());
-  const overdue = days < 0;
-  const soon    = days <= 3;
-
-  const chipStyle = done
-    ? 'bg-emerald-100 text-emerald-700'
-    : overdue
-      ? 'bg-red-100 text-red-700'
-      : soon
-        ? 'bg-amber-100 text-amber-700'
-        : 'bg-orange-50 text-orange-700';
-
-  const dueLabel = done
-    ? 'oddane'
-    : overdue
-      ? 'po terminie'
-      : days === 0
-        ? 'dziś!'
-        : days === 1
-          ? 'jutro!'
-          : `do ${format(parseISO(hw.dueDate), 'd MMM', { locale: pl })}`;
-
   return (
     <button
       onClick={onToggle}
-      className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-opacity cursor-pointer ${
+      className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-left cursor-pointer transition-opacity ${
         hw.isExtra ? 'border-orange-100 bg-orange-50/60' : 'border-amber-100 bg-amber-50/60'
       } ${done ? 'opacity-50' : ''}`}
     >
@@ -58,9 +36,16 @@ function HomeworkBadge({
       {hw.isExtra && (
         <span className="text-xs text-orange-500 font-semibold flex-shrink-0">+</span>
       )}
-      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${chipStyle}`}>
-        {dueLabel}
-      </span>
+      {/* Checkbox */}
+      <div
+        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors"
+        style={done
+          ? { backgroundColor: '#10b981', borderColor: '#10b981' }
+          : { backgroundColor: 'transparent', borderColor: '#d1d5db' }
+        }
+      >
+        {done && <CheckCircle2 className="w-3 h-3 text-white" />}
+      </div>
     </button>
   );
 }
