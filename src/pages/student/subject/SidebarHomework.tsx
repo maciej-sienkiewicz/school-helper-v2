@@ -89,7 +89,7 @@ export function SidebarHomework({
           {mandatory.length > 0 && (
             <div className="mt-3">
               {mandatory.map(h => (
-                <TaskRow key={h.id} hw={h} done={done={doneIds.has(h.id)} onToggle={() => onToggleDone(h.id)} />
+                <TaskRow key={h.id} hw={h} done={doneIds.has(h.id)} onToggle={() => onToggleDone(h.id)} />
               ))}
             </div>
           )}
@@ -102,7 +102,7 @@ export function SidebarHomework({
                 <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">Nadobowiązkowe</span>
               </div>
               {extra.map(h => (
-                <TaskRow key={h.id} hw={h} done={done={doneIds.has(h.id)} onToggle={() => onToggleDone(h.id)} />
+                <TaskRow key={h.id} hw={h} done={doneIds.has(h.id)} onToggle={() => onToggleDone(h.id)} />
               ))}
             </div>
           )}
