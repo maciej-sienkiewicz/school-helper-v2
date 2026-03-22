@@ -3,21 +3,62 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   GraduationCap, FileText, Play, ThumbsUp, MessageCircle,
   ChevronDown, ChevronUp, Send, Layers, BookOpen, CheckCircle2,
-  Circle, Mic,
+  Circle, Mic, ClipboardList,
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { mockStudentLessons, mockUnits, mockTopics, mockTopicStatuses } from '../../../data/mockData';
-import type { StudentLesson, StudentComment } from '../../../types';
+import { mockStudentLessons, mockStudentHomework, mockUnits, mockTopics, mockTopicStatuses } from '../../../data/mockData';
+import type { StudentLesson, StudentComment, StudentHomework } from '../../../types';
 import { NoteModal, MockPlayer } from './shared';
 
 // ─── Single lesson card ────────────────────────────────────────────────────────
 
+function HomeworkBadge({ hw }: { hw: StudentHomework }) {
+  const days = differenceInDays(parseISO(hw.dueDate), new Date());
+  const overdue = days < 0;
+  const soon    = days <= 3;
+
+  const chipStyle = hw.done
+    ? 'bg-emerald-100 text-emerald-700'
+    : overdue
+      ? 'bg-red-100 text-red-700'
+      : soon
+        ? 'bg-amber-100 text-amber-700'
+        : 'bg-orange-50 text-orange-700';
+
+  const dueLabel = hw.done
+    ? 'oddane'
+    : overdue
+      ? 'po terminie'
+      : days === 0
+        ? 'dziś!'
+        : days === 1
+          ? 'jutro!'
+          : `do ${format(parseISO(hw.dueDate), 'd MMM', { locale: pl })}`;
+
+  return (
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${
+      hw.isExtra ? 'border-orange-100 bg-orange-50/60' : 'border-amber-100 bg-amber-50/60'
+    }`}>
+      <ClipboardList className={`w-3.5 h-3.5 flex-shrink-0 ${hw.isExtra ? 'text-orange-400' : 'text-amber-500'}`} />
+      <span className="flex-1 text-xs font-medium text-gray-700 truncate">{hw.title}</span>
+      {hw.isExtra && (
+        <span className="text-xs text-orange-500 font-semibold flex-shrink-0">+</span>
+      )}
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${chipStyle}`}>
+        {dueLabel}
+      </span>
+    </div>
+  );
+}
+
 function LessonCard({
   lesson,
+  homework,
   cardRef,
 }: {
   lesson: StudentLesson;
+  homework: StudentHomework[];
   cardRef?: (el: HTMLDivElement | null) => void;
 }) {
   const [noteOpen, setNoteOpen]           = useState(false);
@@ -101,6 +142,13 @@ function LessonCard({
               </button>
             )}
           </div>
+
+          {/* Homework badges */}
+          {homework.length > 0 && (
+            <div className="space-y-1.5 mt-3">
+              {homework.map(hw => <HomeworkBadge key={hw.id} hw={hw} />)}
+            </div>
+          )}
 
           {/* ── Recording player (shown only when Nagranie is toggled) ── */}
           <AnimatePresence>
@@ -358,7 +406,8 @@ function CurriculumPanel({
 // ─── Tab component ─────────────────────────────────────────────────────────────
 
 export function TabLessons({ subject }: { subject: string }) {
-  const lessons = mockStudentLessons.filter(l => l.subject === subject);
+  const lessons  = mockStudentLessons.filter(l => l.subject === subject);
+  const homework = mockStudentHomework.filter(h => h.subject === subject);
   const [curriculumOpen, setCurriculumOpen] = useState(false);
 
   // Refs for each lesson card keyed by lesson id
@@ -440,6 +489,7 @@ export function TabLessons({ subject }: { subject: string }) {
               <LessonCard
                 key={l.id}
                 lesson={l}
+                homework={homework.filter(h => h.lessonId === l.id)}
                 cardRef={el => cardRefs.current.set(l.id, el)}
               />
             ))}

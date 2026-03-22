@@ -255,6 +255,7 @@ export interface StudentHomework {
   dueDate: string; // ISO
   isExtra: boolean; // false = obowiązkowe, true = dodatkowe/nadobowiązkowe
   done: boolean;
+  lessonId?: string; // lekcja, do której przypisano zadanie
   attachmentNote?: string; // link do notatki z materiałem
 }
 

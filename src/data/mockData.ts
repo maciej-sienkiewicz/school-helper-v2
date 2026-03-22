@@ -739,6 +739,7 @@ export const mockStudentHomework: StudentHomework[] = [
     dueDate: '2026-03-25',
     isExtra: false,
     done: false,
+    lessonId: 'sl1',
   },
   {
     id: 'sh2',
@@ -757,6 +758,7 @@ export const mockStudentHomework: StudentHomework[] = [
     dueDate: '2026-04-04',
     isExtra: true,
     done: false,
+    lessonId: 'sl2',
     attachmentNote: 'n2',
   },
   {
