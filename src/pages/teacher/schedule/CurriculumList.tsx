@@ -10,10 +10,11 @@ import type { CurriculumTopic, TopicStatus } from '../../../types';
 interface Props {
   selectedClassId: string;
   templateId?: string;
+  selectedTopicId?: string;
   onTopicClick: (topic: CurriculumTopic, status: TopicStatus | undefined) => void;
 }
 
-export function CurriculumList({ selectedClassId, templateId, onTopicClick }: Props) {
+export function CurriculumList({ selectedClassId, templateId, selectedTopicId, onTopicClick }: Props) {
   const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set(['u1', 'u3']));
 
   const toggleUnit = (id: string) =>
@@ -95,11 +96,12 @@ export function CurriculumList({ selectedClassId, templateId, onTopicClick }: Pr
                     <div className="divide-y divide-gray-50">
                       {topics.map(topic => {
                         const status = getStatus(topic.id);
+                        const isSelected = topic.id === selectedTopicId;
                         return (
                           <button
                             key={topic.id}
                             onClick={() => onTopicClick(topic, status)}
-                            className="w-full group/row flex items-center gap-3 px-4 py-3 hover:bg-violet-50/50 transition-colors cursor-pointer text-left"
+                            className={`w-full group/row flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer text-left ${isSelected ? 'bg-violet-50 border-l-2 border-violet-400' : 'hover:bg-violet-50/50'}`}
                           >
                             {status?.completed
                               ? <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />

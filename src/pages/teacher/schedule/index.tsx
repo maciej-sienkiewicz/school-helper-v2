@@ -8,10 +8,10 @@ import type { Class, CurriculumTopic, TopicStatus } from '../../../types';
 
 import { ClassHeader }       from './ClassHeader';
 import { CurriculumList }    from './CurriculumList';
-import { LessonDetailModal } from './LessonDetailModal';
+import { LessonDetailPanel } from './LessonDetailPanel';
 import { AddMaterialModal }  from './AddMaterialModal';
 import { AddClassModal }     from './AddClassModal';
-import type { TopicEngagement } from './LessonDetailModal';
+import type { TopicEngagement } from './LessonDetailPanel';
 
 // ─── Mock engagement data per topic per class ─────────────────────────────────
 
@@ -33,14 +33,12 @@ export function Schedule() {
   const [selectedClassId, setSelectedClassId] = useState<string>(mockClasses[0].id);
   const [showAddClass, setShowAddClass] = useState(false);
 
-  // Lesson detail modal state
   const [lessonDetail, setLessonDetail] = useState<{
     topic: CurriculumTopic;
     status: TopicStatus | undefined;
     engagement: TopicEngagement | undefined;
   } | null>(null);
 
-  // Add material modal (can be opened from inside lesson detail)
   const [addMaterialModal, setAddMaterialModal] = useState<{
     type: 'note' | 'recording';
     topicId: string;
@@ -55,13 +53,17 @@ export function Schedule() {
     setShowAddClass(false);
   };
 
+  const handleClassChange = (id: string) => {
+    setSelectedClassId(id);
+    setLessonDetail(null);
+  };
+
   const handleTopicClick = (topic: CurriculumTopic, status: TopicStatus | undefined) => {
     const engagement = engagementData.find(e => e.topicId === topic.id && e.classId === selectedClassId);
     setLessonDetail({ topic, status, engagement });
   };
 
   const handleOpenAddMaterial = (type: 'note' | 'recording', topicId: string, topicName: string) => {
-    setLessonDetail(null);
     setAddMaterialModal({ type, topicId, topicName });
   };
 
@@ -74,7 +76,7 @@ export function Schedule() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="relative max-w-5xl mx-auto"
+        className="relative max-w-7xl mx-auto"
       >
         {/* Page title */}
         <div className="mb-6">
@@ -82,57 +84,61 @@ export function Schedule() {
           <p className="text-gray-500 mt-1">Śledź realizację podstawy programowej i zarządzaj materiałami</p>
         </div>
 
-        {/* Class header with dropdown */}
+        {/* Class header */}
         <ClassHeader
           selectedClass={selectedClass}
           classes={myClasses}
-          onSelectClass={setSelectedClassId}
+          onSelectClass={handleClassChange}
           onAddClass={() => setShowAddClass(true)}
         />
 
-        {/* Curriculum card */}
-        {selectedClass ? (
-          <Card padding="lg">
-            <SectionTitle icon={<BookOpen className="w-4 h-4" />} className="mb-5">
-              Podstawa programowa
-              <span
-                className="ml-2 px-2.5 py-0.5 rounded-full text-sm font-bold"
-                style={{ background: selectedClass.color }}
-              >
-                {selectedClass.name}
-              </span>
-            </SectionTitle>
+        {/* Split layout: list | detail panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
 
-            <CurriculumList
-              selectedClassId={selectedClassId}
-              templateId={selectedClass.templateId}
-              onTopicClick={handleTopicClick}
+          {/* Left: curriculum list */}
+          {selectedClass ? (
+            <Card padding="lg">
+              <SectionTitle icon={<BookOpen className="w-4 h-4" />} className="mb-5">
+                Podstawa programowa
+                <span
+                  className="ml-2 px-2.5 py-0.5 rounded-full text-sm font-bold"
+                  style={{ background: selectedClass.color }}
+                >
+                  {selectedClass.name}
+                </span>
+              </SectionTitle>
+
+              <CurriculumList
+                selectedClassId={selectedClassId}
+                templateId={selectedClass.templateId}
+                selectedTopicId={lessonDetail?.topic.id}
+                onTopicClick={handleTopicClick}
+              />
+            </Card>
+          ) : (
+            <Card padding="lg">
+              <p className="text-center text-gray-400 py-12">Brak klas. Dodaj pierwszą klasę.</p>
+            </Card>
+          )}
+
+          {/* Right: sticky detail panel */}
+          <div className="lg:sticky lg:top-6">
+            <LessonDetailPanel
+              topic={lessonDetail?.topic ?? null}
+              status={lessonDetail?.status}
+              engagement={lessonDetail?.engagement}
+              cls={selectedClass}
+              onClose={() => setLessonDetail(null)}
+              onOpenAddMaterial={handleOpenAddMaterial}
             />
-          </Card>
-        ) : (
-          <Card padding="lg">
-            <p className="text-center text-gray-400 py-12">Brak klas. Dodaj pierwszą klasę.</p>
-          </Card>
-        )}
+          </div>
+        </div>
       </motion.div>
 
-      {/* ── Modals ─────────────────────────────────────────────────────────── */}
+      {/* ── Modals (forms only) ─────────────────────────────────────────────── */}
       <AnimatePresence>
         {showAddClass && (
           <AddClassModal onAdd={addClass} onClose={() => setShowAddClass(false)} />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {lessonDetail && selectedClass && (
-          <LessonDetailModal
-            topic={lessonDetail.topic}
-            status={lessonDetail.status}
-            engagement={lessonDetail.engagement}
-            cls={selectedClass}
-            onClose={() => setLessonDetail(null)}
-            onOpenAddMaterial={handleOpenAddMaterial}
-          />
         )}
       </AnimatePresence>
 
