@@ -245,3 +245,31 @@ export interface StudentExam {
   room?: string;
   color: string;
 }
+
+export interface StudentHomework {
+  id: string;
+  subject: string;
+  title: string;
+  description: string;
+  dueDate: string; // ISO
+  isExtra: boolean; // false = obowiązkowe, true = dodatkowe/nadobowiązkowe
+  done: boolean;
+  attachmentNote?: string; // link do notatki z materiałem
+}
+
+export interface ExternalMaterial {
+  id: string;
+  subject: string;
+  topicName: string;
+  unitName: string;
+  type: 'note' | 'recording' | 'both';
+  scope: 'school' | 'county' | 'voivodeship' | 'all';
+  schoolName: string;
+  city: string;
+  teacherInitials: string;
+  sharedAt: string;
+  likes: number;
+  noteContent?: string;
+  recordingDurationSeconds?: number;
+  thumbnailColor: string;
+}

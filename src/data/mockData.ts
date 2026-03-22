@@ -1,7 +1,7 @@
 import type {
   Teacher, Class, CurriculumUnit, CurriculumTopic, TopicStatus,
   Recording, Note, SharedMaterial, GeneratedTest, ScheduleTemplate,
-  Student, StudentLesson, StudentExam
+  Student, StudentLesson, StudentExam, StudentHomework, ExternalMaterial
 } from '../types';
 
 // ─── Teacher ─────────────────────────────────────────────────────────────────
@@ -720,5 +720,114 @@ export const mockStudentExams: StudentExam[] = [
     durationMinutes: 45,
     room: '7',
     color: '#fde68a',
+  },
+];
+
+// ─── Student Homework ─────────────────────────────────────────────────────────
+
+export const mockStudentHomework: StudentHomework[] = [
+  {
+    id: 'sh1',
+    subject: 'Matematyka',
+    title: 'Zadania z równań liniowych',
+    description: 'Rozwiąż zadania 1–10 ze str. 78 podręcznika. Pokaż wszystkie kroki rozwiązania.',
+    dueDate: '2026-03-25',
+    isExtra: false,
+    done: false,
+  },
+  {
+    id: 'sh2',
+    subject: 'Matematyka',
+    title: 'Układy równań – utrwalenie',
+    description: 'Rozwiąż układy równań metodą podstawiania: zestaw A (6 zadań) z karty pracy.',
+    dueDate: '2026-03-27',
+    isExtra: false,
+    done: true,
+  },
+  {
+    id: 'sh3',
+    subject: 'Matematyka',
+    title: 'Zadania dodatkowe – potęgi',
+    description: 'Dla chętnych: zadania konkursowe ze zbioru (str. 45, zad. 12–16). Oceniane plusem.',
+    dueDate: '2026-04-04',
+    isExtra: true,
+    done: false,
+    attachmentNote: 'n2',
+  },
+  {
+    id: 'sh4',
+    subject: 'Matematyka',
+    title: 'Projekt: statystyka w życiu codziennym',
+    description: 'Zbierz dane (np. temperatury tygodniowe) i przedstaw je na wykresie. Opisz średnią i medianę. Min. 1 strona A4.',
+    dueDate: '2026-04-15',
+    isExtra: true,
+    done: false,
+  },
+];
+
+// ─── External Materials ───────────────────────────────────────────────────────
+
+export const mockExternalMaterials: ExternalMaterial[] = [
+  {
+    id: 'em1',
+    subject: 'Matematyka',
+    topicName: 'Równania liniowe z jedną niewiadomą',
+    unitName: 'Wyrażenia algebraiczne',
+    type: 'both',
+    scope: 'voivodeship',
+    schoolName: 'SP nr 14 im. M. Kopernika',
+    city: 'Kraków',
+    teacherInitials: 'M.W.',
+    sharedAt: '2026-03-10',
+    likes: 142,
+    noteContent: `# Równania liniowe – notatka alternatywna\n\n## Schemat rozwiązania krok po kroku\n\n1. **Przenieś niewiadome** na lewą stronę równania\n2. **Przenieś liczby** na prawą stronę\n3. **Uproszcz** obie strony\n4. **Podziel** przez współczynnik przy x\n\n## Typowe błędy uczniów\n- Zapominanie o zmianie znaku przy przenoszeniu\n- Dzielenie tylko jednej strony\n- Błędy przy ułamkach jako współczynnikach\n\n## Ćwiczenia sprawdzające\n- 4x – 8 = 0 → x = 2\n- 7 – 2x = x + 1 → x = 2\n- (x+3)/2 = 5 → x = 7`,
+    recordingDurationSeconds: 3120,
+    thumbnailColor: '#bae6fd',
+  },
+  {
+    id: 'em2',
+    subject: 'Matematyka',
+    topicName: 'Potęgi – mnożenie i dzielenie',
+    unitName: 'Liczby i działania',
+    type: 'note',
+    scope: 'county',
+    schoolName: 'SP nr 3',
+    city: 'Wieliczka',
+    teacherInitials: 'K.N.',
+    sharedAt: '2026-03-05',
+    likes: 67,
+    noteContent: `# Potęgi – mnożenie i dzielenie\n\n## Reguła mnożenia potęg o tej samej podstawie\na^m · a^n = a^(m+n)\n\nPrzykład: 3^4 · 3^2 = 3^6 = 729\n\n## Reguła dzielenia potęg o tej samej podstawie\na^m / a^n = a^(m-n)\n\nPrzykład: 5^7 / 5^3 = 5^4 = 625\n\n## Potęgowanie potęgi\n(a^m)^n = a^(m·n)\n\nPrzykład: (2^3)^4 = 2^12 = 4096`,
+    thumbnailColor: '#d1fae5',
+  },
+  {
+    id: 'em3',
+    subject: 'Matematyka',
+    topicName: 'Geometria – pola figur płaskich',
+    unitName: 'Geometria płaska',
+    type: 'recording',
+    scope: 'all',
+    schoolName: 'SP im. Jana Pawła II',
+    city: 'Nowy Sącz',
+    teacherInitials: 'B.K.',
+    sharedAt: '2026-02-20',
+    likes: 389,
+    recordingDurationSeconds: 2580,
+    thumbnailColor: '#fde68a',
+  },
+  {
+    id: 'em4',
+    subject: 'Matematyka',
+    topicName: 'Proporcje i procenty – zastosowania',
+    unitName: 'Liczby i działania',
+    type: 'both',
+    scope: 'school',
+    schoolName: 'SP nr 8',
+    city: 'Warszawa',
+    teacherInitials: 'A.B.',
+    sharedAt: '2026-03-15',
+    likes: 28,
+    noteContent: `# Procenty w życiu codziennym\n\n## Gdzie używamy procentów?\n- Podatki (VAT 23%)\n- Rabaty w sklepach\n- Odsetki bankowe\n- Statystyki\n\n## Jak liczyć rabat?\nCena po rabacie = cena × (1 – rabat/100)\nPrzykład: 200 zł przy 15% rabacie = 200 × 0,85 = 170 zł`,
+    recordingDurationSeconds: 1890,
+    thumbnailColor: '#e9d5ff',
   },
 ];
