@@ -14,7 +14,7 @@ import { Profile } from './pages/teacher/Profile';
 import { StudentDashboard } from './pages/student/Dashboard';
 import { StudentExams } from './pages/student/Exams';
 import { StudentProfile } from './pages/student/Profile';
-import { SubjectPage } from './pages/student/SubjectPage';
+import { SubjectPage } from './pages/student/subject';
 
 function AppRoutes() {
   const { isLoggedIn, role } = useAuth();

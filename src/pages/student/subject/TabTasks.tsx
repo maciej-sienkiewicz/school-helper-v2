@@ -6,11 +6,11 @@ import {
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { mockStudentExams, mockStudentHomework } from '../../../data/mockData';
-import type { StudentHomework } from '../../../types';
+import type { StudentExam, StudentHomework } from '../../../types';
 
 // ─── Exam card ─────────────────────────────────────────────────────────────────
 
-function ExamCard({ exam }: { exam: ReturnType<typeof mockStudentExams>[0] }) {
+function ExamCard({ exam }: { exam: StudentExam }) {
   const days = differenceInDays(parseISO(exam.date), new Date());
   const chip =
     days <= 0 ? 'bg-red-100 text-red-700' :
@@ -54,7 +54,7 @@ function ExamCard({ exam }: { exam: ReturnType<typeof mockStudentExams>[0] }) {
 
       {/* Topic badges */}
       <div className="flex flex-wrap gap-1.5">
-        {exam.topicNames.map(t => (
+        {exam.topicNames.map((t: string) => (
           <span key={t} className="text-xs px-2.5 py-1 rounded-full font-medium" style={{ backgroundColor: exam.color + '60', color: '#374151' }}>
             {t}
           </span>
