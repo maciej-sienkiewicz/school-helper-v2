@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Zap, Globe } from 'lucide-react';
-import { mockStudentLessons, mockExternalMaterials } from '../../../data/mockData';
+import { mockStudentLessons, mockExternalMaterials, mockStudentHomework } from '../../../data/mockData';
 import { SubjectHeader }   from './SubjectHeader';
 import { TabLessons }      from './TabLessons';
 import { TabStudyLab }     from './TabStudyLab';
@@ -28,6 +28,13 @@ export function SubjectPage() {
   const [activeTab, setActiveTab] = useState<TabId>('lessons');
 
   if (!subject) return <Navigate to="/student" replace />;
+
+  const allHomework = mockStudentHomework.filter(h => h.subject === subject);
+  const [doneIds, setDoneIds] = useState<Set<string>>(
+    new Set(allHomework.filter(h => h.done).map(h => h.id))
+  );
+  const toggleDone = (id: string) =>
+    setDoneIds(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   const counts: Record<TabId, number> = {
     lessons:  mockStudentLessons.filter(l => l.subject === subject).length,
@@ -82,7 +89,7 @@ export function SubjectPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {activeTab === 'lessons'  && <TabLessons  subject={subject} />}
+              {activeTab === 'lessons'  && <TabLessons  subject={subject} doneIds={doneIds} onToggleDone={toggleDone} />}
               {activeTab === 'studylab' && <TabStudyLab subject={subject} />}
               {activeTab === 'explore'  && <TabExplore  subject={subject} />}
             </motion.div>
@@ -92,7 +99,7 @@ export function SubjectPage() {
         {/* ── Sidebar (1/3) ──────────────────────────────────────────────────── */}
         <div className="space-y-4 lg:sticky lg:top-6">
           <SidebarExams    subject={subject} />
-          <SidebarHomework subject={subject} />
+          <SidebarHomework subject={subject} doneIds={doneIds} onToggleDone={toggleDone} />
         </div>
 
       </div>

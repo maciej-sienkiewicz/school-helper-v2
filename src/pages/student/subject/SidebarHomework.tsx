@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ClipboardList, CheckCircle2, CalendarCheck, Award } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { pl } from 'date-fns/locale';
@@ -55,18 +54,20 @@ function TaskRow({ hw, done, onToggle }: { hw: StudentHomework; done: boolean; o
 
 // ─── Sidebar tile ──────────────────────────────────────────────────────────────
 
-export function SidebarHomework({ subject }: { subject: string }) {
+export function SidebarHomework({
+  subject,
+  doneIds,
+  onToggleDone,
+}: {
+  subject: string;
+  doneIds: Set<string>;
+  onToggleDone: (id: string) => void;
+}) {
   const all = mockStudentHomework.filter(h => h.subject === subject);
-  const [done, setDone] = useState<Set<string>>(
-    new Set(all.filter(h => h.done).map(h => h.id))
-  );
-
-  const toggle = (id: string) =>
-    setDone(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   const mandatory = all.filter(h => !h.isExtra);
   const extra     = all.filter(h => h.isExtra);
-  const pendingCount = mandatory.filter(h => !done.has(h.id)).length;
+  const pendingCount = mandatory.filter(h => !doneIds.has(h.id)).length;
 
   return (
     <div className="bg-white rounded-3xl shadow-card border border-white/80 p-5">
@@ -88,7 +89,7 @@ export function SidebarHomework({ subject }: { subject: string }) {
           {mandatory.length > 0 && (
             <div className="mt-3">
               {mandatory.map(h => (
-                <TaskRow key={h.id} hw={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} />
+                <TaskRow key={h.id} hw={h} done={done={doneIds.has(h.id)} onToggle={() => onToggleDone(h.id)} />
               ))}
             </div>
           )}
@@ -101,7 +102,7 @@ export function SidebarHomework({ subject }: { subject: string }) {
                 <span className="text-xs font-bold text-amber-600 uppercase tracking-wide">Nadobowiązkowe</span>
               </div>
               {extra.map(h => (
-                <TaskRow key={h.id} hw={h} done={done.has(h.id)} onToggle={() => toggle(h.id)} />
+                <TaskRow key={h.id} hw={h} done={done={doneIds.has(h.id)} onToggle={() => onToggleDone(h.id)} />
               ))}
             </div>
           )}
