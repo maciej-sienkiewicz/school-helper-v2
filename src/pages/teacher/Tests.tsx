@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FlaskConical, CheckSquare, Type, Shuffle,
   Plus, Minus, Sparkles, Printer, ChevronDown,
-  ChevronUp, Check, FileQuestion, GraduationCap
+  ChevronUp, Check, FileQuestion, GraduationCap,
+  LayoutTemplate, RefreshCw
 } from 'lucide-react';
 import { Card, SectionTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Blob as BlobShape } from '../../components/ui/Blob';
-import { mockUnits, mockTopics, mockTopicStatuses, mockGeneratedTests } from '../../data/mockData';
+import { mockGeneratedTests, mockScheduleTemplates } from '../../data/mockData';
 import type { TestQuestion, GeneratedTest } from '../../types';
 
 function exportTestToPDF(test: GeneratedTest) {
@@ -289,10 +290,6 @@ function exportTestToPDF(test: GeneratedTest) {
   }
 }
 
-const topicsWithNotes = new Set(
-  mockTopicStatuses.filter(s => s.hasNote).map(s => s.topicId)
-);
-
 function CountInput({ value, onChange, min = 0, max = 10 }: { value: number; onChange: (v: number) => void; min?: number; max?: number }) {
   return (
     <div className="flex items-center gap-2">
@@ -485,6 +482,7 @@ function ExistingTestCard({ test }: { test: GeneratedTest }) {
 }
 
 export function Tests() {
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
   const [customScope, setCustomScope] = useState('');
   const [config, setConfig] = useState({
@@ -496,6 +494,14 @@ export function Tests() {
   const [generating, setGenerating] = useState(false);
   const [tests, setTests] = useState<GeneratedTest[]>(mockGeneratedTests);
 
+  const selectedTemplate = mockScheduleTemplates.find(t => t.id === selectedTemplateId) ?? null;
+
+  const handleSelectTemplate = (id: string) => {
+    if (selectedTemplateId === id) return;
+    setSelectedTemplateId(id);
+    setSelectedTopics(new Set());
+  };
+
   const toggleTopic = (id: string) => {
     setSelectedTopics(prev => {
       const next = new Set(prev);
@@ -505,6 +511,10 @@ export function Tests() {
   };
 
   const handleGenerate = () => {
+    if (!selectedTemplateId) {
+      alert('Najpierw wybierz szablon z działami i tematami!');
+      return;
+    }
     if (selectedTopics.size === 0 && !customScope.trim()) {
       alert('Wybierz co najmniej jeden temat lub wpisz zakres niestandardowy!');
       return;
@@ -536,81 +546,121 @@ export function Tests() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Left: Topic selector */}
+          {/* Left: Step 1 + Step 2 */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-3"
+            className="lg:col-span-3 space-y-4"
           >
+            {/* STEP 1: Template selection */}
             <Card padding="lg">
-              <SectionTitle icon={<FileQuestion className="w-4 h-4" />} className="mb-5">
-                Wybierz zakres testu
+              <SectionTitle icon={<LayoutTemplate className="w-4 h-4" />} className="mb-4">
+                Krok 1: Wybierz szablon
               </SectionTitle>
-
-              <div className="space-y-3 mb-5">
-                {mockUnits.map(unit => {
-                  const topics = mockTopics.filter(t => t.unitId === unit.id);
-                  const hasAnyNote = topics.some(t => topicsWithNotes.has(t.id));
-                  if (!hasAnyNote) return null;
-
+              <div className="space-y-2">
+                {mockScheduleTemplates.map(template => {
+                  const isSelected = selectedTemplateId === template.id;
+                  const topicCount = template.units.reduce((sum, u) => sum + u.topics.length, 0);
                   return (
-                    <div key={unit.id}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
-                          <GraduationCap className="w-3 h-3 text-violet-600" />
+                    <button
+                      key={template.id}
+                      onClick={() => handleSelectTemplate(template.id)}
+                      className={`w-full flex items-start gap-3 p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer border-2 ${
+                        isSelected
+                          ? 'border-violet-500 bg-violet-50'
+                          : 'border-transparent bg-gray-50 hover:bg-violet-50 hover:border-violet-200'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                        isSelected ? 'border-violet-500 bg-violet-500' : 'border-gray-300 bg-white'
+                      }`}>
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-sm font-semibold ${isSelected ? 'text-violet-700' : 'text-gray-700'}`}>
+                          {template.name}
                         </div>
-                        <span className="text-sm font-bold text-gray-700">{unit.name}</span>
+                        {template.description && (
+                          <div className="text-xs text-gray-500 mt-0.5 truncate">{template.description}</div>
+                        )}
                       </div>
-                      <div className="pl-8 space-y-1.5">
-                        {topics.map(topic => {
-                          const hasNote = topicsWithNotes.has(topic.id);
-                          const isSelected = selectedTopics.has(topic.id);
-                          return (
-                            <button
-                              key={topic.id}
-                              onClick={() => hasNote && toggleTopic(topic.id)}
-                              disabled={!hasNote}
-                              className={`w-full flex items-center gap-3 p-3 rounded-2xl text-sm transition-all duration-200 cursor-pointer text-left ${
-                                !hasNote
-                                  ? 'opacity-40 cursor-not-allowed bg-gray-50'
-                                  : isSelected
-                                  ? 'bg-violet-600 text-white shadow-md'
-                                  : 'bg-gray-50 hover:bg-violet-50 text-gray-700'
-                              }`}
-                            >
-                              <div className={`w-5 h-5 rounded-md flex items-center justify-center border-2 flex-shrink-0 transition-all ${
-                                isSelected ? 'bg-white border-white' : hasNote ? 'border-violet-300 bg-white' : 'border-gray-200 bg-white'
-                              }`}>
-                                {isSelected && <Check className="w-3 h-3 text-violet-600" />}
-                              </div>
-                              <span className="flex-1">{topic.name}</span>
-                              {hasNote && !isSelected && (
-                                <span className="text-xs text-violet-400 flex items-center gap-1">
-                                  <FileQuestion className="w-3 h-3" /> ma notatkę
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
+                      <div className="flex gap-1.5 flex-shrink-0">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 font-medium">
+                          {template.units.length} działy
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium">
+                          {topicCount} tematy
+                        </span>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
+            </Card>
 
-              {/* Custom scope */}
-              <div>
-                <label className="text-xs font-semibold text-gray-500 mb-2 block uppercase tracking-wider">
-                  Niestandardowy zakres (opcjonalnie)
-                </label>
-                <textarea
-                  value={customScope}
-                  onChange={e => setCustomScope(e.target.value)}
-                  placeholder="Np. 'Dodaj pytania z całkowania przez podstawienie...'"
-                  className="w-full p-3 bg-gray-50 rounded-2xl border border-gray-200 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400"
-                  rows={3}
-                />
-              </div>
+            {/* STEP 2: Scope selection from template */}
+            <Card padding="lg" className={!selectedTemplate ? 'opacity-50 pointer-events-none' : ''}>
+              <SectionTitle icon={<FileQuestion className="w-4 h-4" />} className="mb-4">
+                Krok 2: Wybierz zakres sprawdzianu
+              </SectionTitle>
+
+              {!selectedTemplate ? (
+                <p className="text-sm text-gray-400 text-center py-4">
+                  Najpierw wybierz szablon w kroku 1
+                </p>
+              ) : (
+                <>
+                  <div className="space-y-3 mb-5">
+                    {selectedTemplate.units.map(unit => (
+                      <div key={unit.id}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
+                            <GraduationCap className="w-3 h-3 text-violet-600" />
+                          </div>
+                          <span className="text-sm font-bold text-gray-700">{unit.name}</span>
+                        </div>
+                        <div className="pl-8 space-y-1.5">
+                          {unit.topics.map(topic => {
+                            const isSelected = selectedTopics.has(topic.id);
+                            return (
+                              <button
+                                key={topic.id}
+                                onClick={() => toggleTopic(topic.id)}
+                                className={`w-full flex items-center gap-3 p-3 rounded-2xl text-sm transition-all duration-200 cursor-pointer text-left ${
+                                  isSelected
+                                    ? 'bg-violet-600 text-white shadow-md'
+                                    : 'bg-gray-50 hover:bg-violet-50 text-gray-700'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border-2 flex-shrink-0 transition-all ${
+                                  isSelected ? 'bg-white border-white' : 'border-violet-300 bg-white'
+                                }`}>
+                                  {isSelected && <Check className="w-3 h-3 text-violet-600" />}
+                                </div>
+                                <span className="flex-1">{topic.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Custom scope */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 mb-2 block uppercase tracking-wider">
+                      Niestandardowy zakres (opcjonalnie)
+                    </label>
+                    <textarea
+                      value={customScope}
+                      onChange={e => setCustomScope(e.target.value)}
+                      placeholder="Np. 'Dodaj pytania z całkowania przez podstawienie...'"
+                      className="w-full p-3 bg-gray-50 rounded-2xl border border-gray-200 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+                      rows={3}
+                    />
+                  </div>
+                </>
+              )}
             </Card>
           </motion.div>
 
