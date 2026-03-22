@@ -5,7 +5,7 @@ import { StudentLayout } from './components/layout/StudentLayout';
 import { Login } from './pages/Login';
 // Teacher pages
 import { Dashboard } from './pages/teacher/Dashboard';
-import { Schedule } from './pages/teacher/Schedule';
+import { Schedule } from './pages/teacher/schedule';
 import { ScheduleTemplates } from './pages/teacher/ScheduleTemplates';
 import { Recordings } from './pages/teacher/recordings';
 import { Tests } from './pages/teacher/Tests';
