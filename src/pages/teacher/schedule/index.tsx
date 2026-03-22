@@ -11,9 +11,11 @@ import { CurriculumList }    from './CurriculumList';
 import { LessonDetailPanel } from './LessonDetailPanel';
 import { AddMaterialModal }  from './AddMaterialModal';
 import { AddClassModal }     from './AddClassModal';
+import { AddHomeworkModal }  from './AddHomeworkModal';
 import type { TopicEngagement } from './LessonDetailPanel';
+import type { Homework } from './AddHomeworkModal';
 
-// ─── Mock engagement data per topic per class ─────────────────────────────────
+// ─── Mock engagement data ─────────────────────────────────────────────────────
 
 const engagementData: Array<{ topicId: string; classId: string } & TopicEngagement> = [
   { topicId: 'tp1', classId: 'c1', studentsOpenedNote: 18, studentsListenedRecording: 15 },
@@ -26,12 +28,36 @@ const engagementData: Array<{ topicId: string; classId: string } & TopicEngageme
   { topicId: 'tp8', classId: 'c3', studentsOpenedNote: 24, studentsListenedRecording: 18 },
 ];
 
+// ─── Mock homework seed data ──────────────────────────────────────────────────
+
+const initialHomework: Homework[] = [
+  {
+    id: 'hw-seed-1',
+    topicId: 'tp1',
+    classId: 'c1',
+    title: 'Zadania z potęg, str. 45 zad. 1–8',
+    description: '',
+    dueDate: '2026-03-28',
+    isExtra: false,
+  },
+  {
+    id: 'hw-seed-2',
+    topicId: 'tp1',
+    classId: 'c1',
+    title: 'Esej: zastosowania potęg w fizyce',
+    description: 'Min. 1 strona A4',
+    dueDate: '2026-04-04',
+    isExtra: true,
+  },
+];
+
 // ─── Schedule ─────────────────────────────────────────────────────────────────
 
 export function Schedule() {
-  const [myClasses, setMyClasses] = useState<Class[]>(mockClasses);
+  const [myClasses, setMyClasses]         = useState<Class[]>(mockClasses);
   const [selectedClassId, setSelectedClassId] = useState<string>(mockClasses[0].id);
-  const [showAddClass, setShowAddClass] = useState(false);
+  const [showAddClass, setShowAddClass]   = useState(false);
+  const [homeworkItems, setHomeworkItems] = useState<Homework[]>(initialHomework);
 
   const [lessonDetail, setLessonDetail] = useState<{
     topic: CurriculumTopic;
@@ -41,6 +67,11 @@ export function Schedule() {
 
   const [addMaterialModal, setAddMaterialModal] = useState<{
     type: 'note' | 'recording';
+    topicId: string;
+    topicName: string;
+  } | null>(null);
+
+  const [addHomeworkModal, setAddHomeworkModal] = useState<{
     topicId: string;
     topicName: string;
   } | null>(null);
@@ -63,9 +94,9 @@ export function Schedule() {
     setLessonDetail({ topic, status, engagement });
   };
 
-  const handleOpenAddMaterial = (type: 'note' | 'recording', topicId: string, topicName: string) => {
-    setAddMaterialModal({ type, topicId, topicName });
-  };
+  const topicHomework = lessonDetail
+    ? homeworkItems.filter(h => h.topicId === lessonDetail.topic.id && h.classId === selectedClassId)
+    : [];
 
   return (
     <div className="min-h-screen relative overflow-hidden p-6 sm:p-8">
@@ -78,13 +109,11 @@ export function Schedule() {
         transition={{ duration: 0.35 }}
         className="relative max-w-7xl mx-auto"
       >
-        {/* Page title */}
         <div className="mb-6">
           <h1 className="text-3xl font-extrabold text-gray-800">Klasy & Program nauczania</h1>
           <p className="text-gray-500 mt-1">Śledź realizację podstawy programowej i zarządzaj materiałami</p>
         </div>
 
-        {/* Class header */}
         <ClassHeader
           selectedClass={selectedClass}
           classes={myClasses}
@@ -92,7 +121,7 @@ export function Schedule() {
           onAddClass={() => setShowAddClass(true)}
         />
 
-        {/* Split layout: list | detail panel */}
+        {/* Split layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
 
           {/* Left: curriculum list */}
@@ -128,14 +157,23 @@ export function Schedule() {
               status={lessonDetail?.status}
               engagement={lessonDetail?.engagement}
               cls={selectedClass}
+              homeworkList={topicHomework}
               onClose={() => setLessonDetail(null)}
-              onOpenAddMaterial={handleOpenAddMaterial}
+              onOpenAddMaterial={(type, topicId, topicName) =>
+                setAddMaterialModal({ type, topicId, topicName })
+              }
+              onOpenAddHomework={(topicId, topicName) =>
+                setAddHomeworkModal({ topicId, topicName })
+              }
+              onDeleteHomework={id =>
+                setHomeworkItems(prev => prev.filter(h => h.id !== id))
+              }
             />
           </div>
         </div>
       </motion.div>
 
-      {/* ── Modals (forms only) ─────────────────────────────────────────────── */}
+      {/* ── Modals ─────────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {showAddClass && (
           <AddClassModal onAdd={addClass} onClose={() => setShowAddClass(false)} />
@@ -151,6 +189,18 @@ export function Schedule() {
             currentClassId={selectedClassId}
             onClose={() => setAddMaterialModal(null)}
             onConfirm={() => setAddMaterialModal(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {addHomeworkModal && (
+          <AddHomeworkModal
+            topicId={addHomeworkModal.topicId}
+            topicName={addHomeworkModal.topicName}
+            classId={selectedClassId}
+            onAdd={hw => setHomeworkItems(prev => [...prev, hw])}
+            onClose={() => setAddHomeworkModal(null)}
           />
         )}
       </AnimatePresence>
