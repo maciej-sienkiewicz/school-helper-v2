@@ -433,23 +433,186 @@ function TabLessons({ subject }: { subject: string }) {
   );
 }
 
+// ─── Tab 2: Zadania i Egzaminy ────────────────────────────────────────────────
+
+type HwStatus = 'todo' | 'in_progress' | 'done';
+
 function TabTasksAndExams({ subject }: { subject: string }) {
   const exams = mockStudentExams.filter(e => e.subject === subject);
-  const hw = mockStudentHomework.filter(h => h.subject === subject);
+  const all   = mockStudentHomework.filter(h => h.subject === subject);
+
+  const [statuses, setStatuses] = useState<Record<string, HwStatus>>(() =>
+    Object.fromEntries(all.map(h => [h.id, h.done ? 'done' : 'todo']))
+  );
+
+  const cycleStatus = (id: string) => {
+    setStatuses(prev => {
+      const cur = prev[id];
+      const next: HwStatus = cur === 'todo' ? 'in_progress' : cur === 'in_progress' ? 'done' : 'todo';
+      return { ...prev, [id]: next };
+    });
+  };
+
+  const statusCfg: Record<HwStatus, { label: string; chip: string; ring: string }> = {
+    todo:        { label: 'Do zrobienia', chip: 'bg-gray-100 text-gray-600 border-gray-200',       ring: 'border-gray-100' },
+    in_progress: { label: 'W trakcie',    chip: 'bg-amber-100 text-amber-700 border-amber-200',    ring: 'border-amber-200 bg-amber-50' },
+    done:        { label: 'Oddane',       chip: 'bg-emerald-100 text-emerald-700 border-emerald-200', ring: 'border-emerald-200 bg-emerald-50' },
+  };
+
+  const mandatory = all.filter(h => !h.isExtra);
+  const extra     = all.filter(h =>  h.isExtra);
+
+  const HwCard = ({ hw }: { hw: StudentHomework }) => {
+    const status = statuses[hw.id] ?? 'todo';
+    const cfg    = statusCfg[status];
+    const days   = differenceInDays(parseISO(hw.dueDate), new Date());
+    const urgent = days <= 2 && status === 'todo';
+
+    return (
+      <div className={`p-4 rounded-2xl border-2 transition-all ${urgent ? 'border-red-200 bg-red-50' : cfg.ring}`}>
+        <div className="flex items-start gap-3">
+          {/* Tap-to-cycle checkbox */}
+          <button
+            onClick={() => cycleStatus(hw.id)}
+            title="Zmień status"
+            className="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all cursor-pointer p-3 box-content -mx-1 -my-1"
+          >
+            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${
+              status === 'done' ? 'bg-emerald-500 border-emerald-500' :
+              status === 'in_progress' ? 'border-amber-400 bg-amber-50' :
+              'border-gray-300'
+            }`}>
+              {status === 'done' && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+              {status === 'in_progress' && <Clock className="w-3 h-3 text-amber-500" />}
+            </div>
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <p className={`font-bold text-sm mb-1 ${status === 'done' ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+              {hw.title}
+            </p>
+            <p className={`text-sm mb-3 ${status === 'done' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {hw.description}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Status chip – tap to cycle */}
+              <button
+                onClick={() => cycleStatus(hw.id)}
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full border cursor-pointer transition-all min-h-[28px] ${cfg.chip}`}
+              >
+                {cfg.label}
+              </button>
+              <span className={`text-xs font-medium flex items-center gap-1 ${urgent ? 'text-red-600' : 'text-gray-500'}`}>
+                <CalendarCheck className="w-3 h-3" />
+                {status === 'done' ? 'Oddane' :
+                  days < 0 ? `Spóźnione o ${Math.abs(days)} dni` :
+                  days === 0 ? 'Dzisiaj!' : `Za ${days} dni`
+                }
+                {' · '}{format(parseISO(hw.dueDate), 'd MMM', { locale: pl })}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-3">
-      {exams.map(e => (
-        <Card key={e.id} padding="md">
-          <p className="font-bold text-sm text-gray-800">{e.scope}</p>
-          <p className="text-xs text-gray-500">{format(parseISO(e.date), 'd MMMM yyyy', { locale: pl })}</p>
-        </Card>
-      ))}
-      {hw.map(h => (
-        <Card key={h.id} padding="md">
-          <p className="font-bold text-sm text-gray-800">{h.title}</p>
-          <p className="text-xs text-gray-500">{h.description}</p>
-        </Card>
-      ))}
+    <div className="space-y-8">
+      {/* Egzaminy */}
+      {exams.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <CalendarCheck className="w-4 h-4 text-amber-600" />
+            </div>
+            <span className="text-sm font-bold text-gray-700">Egzaminy</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+          <div className="space-y-3">
+            {exams.map(exam => {
+              const days = differenceInDays(parseISO(exam.date), new Date());
+              const chipCls = days <= 3 ? 'bg-red-100 text-red-700' : days <= 7 ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700';
+              const label   = days === 0 ? 'Dzisiaj!' : days === 1 ? 'Jutro!' : `Za ${days} dni`;
+              return (
+                <div key={exam.id} className="p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: exam.color }}>
+                        <CalendarCheck className="w-4 h-4 text-white/80" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-800 text-sm">
+                          {format(parseISO(exam.date), 'd MMMM yyyy', { locale: pl })}
+                        </p>
+                        <p className="text-xs text-gray-500 flex items-center gap-2 mt-0.5">
+                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {exam.durationMinutes} min</span>
+                          {exam.room && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> sala {exam.room}</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ${chipCls}`}>{label}</span>
+                  </div>
+                  <div className="bg-amber-50 rounded-xl p-3 mb-3 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold text-amber-800 mb-0.5">Zakres</p>
+                      <p className="text-sm text-amber-700">{exam.scope}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {exam.topicNames.map(t => (
+                      <span key={t} className="text-xs px-2.5 py-1 rounded-full font-medium"
+                        style={{ backgroundColor: exam.color + '60', color: '#374151' }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Zadania obowiązkowe */}
+      {mandatory.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+              <ClipboardList className="w-4 h-4 text-violet-600" />
+            </div>
+            <span className="text-sm font-bold text-gray-700">Zadania obowiązkowe</span>
+            <span className="text-xs text-gray-400">
+              {mandatory.filter(h => statuses[h.id] === 'done').length}/{mandatory.length} zrobionych
+            </span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+          <div className="space-y-2">{mandatory.map(h => <HwCard key={h.id} hw={h} />)}</div>
+        </div>
+      )}
+
+      {/* Zadania dodatkowe */}
+      {extra.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <Award className="w-4 h-4 text-amber-600" />
+            </div>
+            <span className="text-sm font-bold text-gray-700">Zadania dodatkowe</span>
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">Nadobowiązkowe</span>
+            <div className="flex-1 h-px bg-gray-100" />
+          </div>
+          <div className="space-y-2">{extra.map(h => <HwCard key={h.id} hw={h} />)}</div>
+        </div>
+      )}
+
+      {exams.length === 0 && all.length === 0 && (
+        <div className="text-center py-10">
+          <CalendarCheck className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-gray-500 text-sm">Brak egzaminów i zadań z tego przedmiotu.</p>
+        </div>
+      )}
     </div>
   );
 }
