@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Mic, Clock, FileText, CheckCircle2, Share2, Trash2, Headphones,
+  Clock, FileText, CheckCircle2, Share2, Trash2, Headphones,
 } from 'lucide-react';
 import { Button } from '../../../../components/ui/Button';
 import { Badge } from '../../../../components/ui/Badge';
@@ -52,14 +52,12 @@ function NoteCard({ rec, note, onDelete }: NoteCardProps) {
         className="border border-gray-100 rounded-3xl overflow-hidden hover:shadow-card transition-shadow"
       >
         <div className="flex items-center gap-4 p-5" style={{ background: (rec.thumbnailColor ?? '#f3f4f6') + '40' }}>
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: rec.thumbnailColor ?? '#f3f4f6' }}>
-            <Mic className="w-5 h-5 text-violet-700" />
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 font-bold text-violet-800 text-sm" style={{ background: rec.thumbnailColor ?? '#f3f4f6' }}>
+            {rec.className}
           </div>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-gray-800 truncate">{rec.topicName ?? 'Lekcja bez tematu'}</div>
             <div className="text-xs text-gray-600 mt-0.5 flex items-center gap-2">
-              <span className="font-medium">{rec.className}</span>
-              <span>·</span>
               <span>{format(parseISO(rec.date), 'd MMMM yyyy, HH:mm', { locale: pl })}</span>
               <span>·</span>
               <Clock className="w-3 h-3" />
