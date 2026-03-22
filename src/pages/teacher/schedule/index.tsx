@@ -6,14 +6,16 @@ import { Card, SectionTitle } from '../../../components/ui/Card';
 import { mockClasses } from '../../../data/mockData';
 import type { Class, CurriculumTopic, TopicStatus } from '../../../types';
 
-import { ClassHeader }       from './ClassHeader';
-import { CurriculumList }    from './CurriculumList';
-import { LessonDetailPanel } from './LessonDetailPanel';
-import { AddMaterialModal }  from './AddMaterialModal';
-import { AddClassModal }     from './AddClassModal';
-import { AddHomeworkModal }  from './AddHomeworkModal';
+import { ClassHeader }        from './ClassHeader';
+import { CurriculumList }     from './CurriculumList';
+import { LessonDetailPanel }  from './LessonDetailPanel';
+import { AddMaterialModal }   from './AddMaterialModal';
+import { AddClassModal }      from './AddClassModal';
+import { AddHomeworkModal }   from './AddHomeworkModal';
+import { ScheduleTestModal }  from './ScheduleTestModal';
 import type { TopicEngagement } from './LessonDetailPanel';
-import type { Homework } from './AddHomeworkModal';
+import type { Homework }        from './AddHomeworkModal';
+import type { ScheduledExam }   from './ScheduleTestModal';
 
 // ─── Mock engagement data ─────────────────────────────────────────────────────
 
@@ -28,36 +30,39 @@ const engagementData: Array<{ topicId: string; classId: string } & TopicEngageme
   { topicId: 'tp8', classId: 'c3', studentsOpenedNote: 24, studentsListenedRecording: 18 },
 ];
 
-// ─── Mock homework seed data ──────────────────────────────────────────────────
+// ─── Seed data ────────────────────────────────────────────────────────────────
 
 const initialHomework: Homework[] = [
   {
-    id: 'hw-seed-1',
-    topicId: 'tp1',
-    classId: 'c1',
+    id: 'hw-seed-1', topicId: 'tp1', classId: 'c1',
     title: 'Zadania z potęg, str. 45 zad. 1–8',
-    description: '',
-    dueDate: '2026-03-28',
-    isExtra: false,
+    description: '', dueDate: '2026-03-28', isExtra: false,
   },
   {
-    id: 'hw-seed-2',
-    topicId: 'tp1',
-    classId: 'c1',
+    id: 'hw-seed-2', topicId: 'tp1', classId: 'c1',
     title: 'Esej: zastosowania potęg w fizyce',
-    description: 'Min. 1 strona A4',
-    dueDate: '2026-04-04',
-    isExtra: true,
+    description: 'Min. 1 strona A4', dueDate: '2026-04-04', isExtra: true,
+  },
+];
+
+const initialExams: ScheduledExam[] = [
+  {
+    id: 'exam-seed-1', classId: 'c1',
+    date: '2026-04-10',
+    testTitle: 'Sprawdzian: Liczby i wyrażenia algebraiczne',
+    source: 'generator', generatedTestId: 'gt1',
+    topicIds: ['tp1', 'tp2', 'tp4'],
   },
 ];
 
 // ─── Schedule ─────────────────────────────────────────────────────────────────
 
 export function Schedule() {
-  const [myClasses, setMyClasses]         = useState<Class[]>(mockClasses);
+  const [myClasses, setMyClasses]             = useState<Class[]>(mockClasses);
   const [selectedClassId, setSelectedClassId] = useState<string>(mockClasses[0].id);
-  const [showAddClass, setShowAddClass]   = useState(false);
-  const [homeworkItems, setHomeworkItems] = useState<Homework[]>(initialHomework);
+  const [showAddClass, setShowAddClass]       = useState(false);
+  const [homeworkItems, setHomeworkItems]     = useState<Homework[]>(initialHomework);
+  const [examItems, setExamItems]             = useState<ScheduledExam[]>(initialExams);
 
   const [lessonDetail, setLessonDetail] = useState<{
     topic: CurriculumTopic;
@@ -76,7 +81,12 @@ export function Schedule() {
     topicName: string;
   } | null>(null);
 
+  // null = closed, undefined = new exam, ScheduledExam = editing existing
+  const [scheduleTestModal, setScheduleTestModal] = useState<ScheduledExam | undefined | null>(null);
+
   const selectedClass = myClasses.find(c => c.id === selectedClassId);
+
+  const classExams = examItems.filter(e => e.classId === selectedClassId);
 
   const addClass = (cls: Class) => {
     setMyClasses(prev => [...prev, cls]);
@@ -97,6 +107,13 @@ export function Schedule() {
   const topicHomework = lessonDetail
     ? homeworkItems.filter(h => h.topicId === lessonDetail.topic.id && h.classId === selectedClassId)
     : [];
+
+  const handleUpsertExam = (exam: ScheduledExam) => {
+    setExamItems(prev => {
+      const exists = prev.find(e => e.id === exam.id);
+      return exists ? prev.map(e => e.id === exam.id ? exam : e) : [...prev, exam];
+    });
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden p-6 sm:p-8">
@@ -136,7 +153,6 @@ export function Schedule() {
                   {selectedClass.name}
                 </span>
               </SectionTitle>
-
               <CurriculumList
                 selectedClassId={selectedClassId}
                 templateId={selectedClass.templateId}
@@ -158,6 +174,7 @@ export function Schedule() {
               engagement={lessonDetail?.engagement}
               cls={selectedClass}
               homeworkList={topicHomework}
+              examList={classExams}
               onClose={() => setLessonDetail(null)}
               onOpenAddMaterial={(type, topicId, topicName) =>
                 setAddMaterialModal({ type, topicId, topicName })
@@ -167,6 +184,11 @@ export function Schedule() {
               }
               onDeleteHomework={id =>
                 setHomeworkItems(prev => prev.filter(h => h.id !== id))
+              }
+              onScheduleTest={() => setScheduleTestModal(undefined)}
+              onEditExam={exam => setScheduleTestModal(exam)}
+              onDeleteExam={id =>
+                setExamItems(prev => prev.filter(e => e.id !== id))
               }
             />
           </div>
@@ -201,6 +223,18 @@ export function Schedule() {
             classId={selectedClassId}
             onAdd={hw => setHomeworkItems(prev => [...prev, hw])}
             onClose={() => setAddHomeworkModal(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {scheduleTestModal !== null && selectedClass && (
+          <ScheduleTestModal
+            classId={selectedClassId}
+            className={`${selectedClass.name} — ${selectedClass.subject}`}
+            initial={scheduleTestModal}
+            onAdd={handleUpsertExam}
+            onClose={() => setScheduleTestModal(null)}
           />
         )}
       </AnimatePresence>

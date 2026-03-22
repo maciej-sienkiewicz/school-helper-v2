@@ -3,17 +3,19 @@ import {
   GraduationCap, BarChart2, BookOpen, ClipboardList,
   FileText, Mic, CheckCircle2, Share2, Plus, Edit3,
   MousePointerClick, X, Calendar, Star, Trash2,
+  FlaskConical, Pencil,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import type { Class, CurriculumTopic, TopicStatus } from '../../../types';
 import type { Homework } from './AddHomeworkModal';
+import type { ScheduledExam } from './ScheduleTestModal';
 
 export interface TopicEngagement {
   studentsOpenedNote: number;
   studentsListenedRecording: number;
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+// ─── helpers ──────────────────────────────────────────────────────────────────
 
 function SectionLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -44,18 +46,125 @@ function EngagementBar({ label, count, total, color }: {
   );
 }
 
+function ExamCard({
+  exam,
+  onEdit,
+  onDelete,
+}: {
+  exam: ScheduledExam;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const dateLabel = new Date(exam.date).toLocaleDateString('pl-PL', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  });
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+      transition={{ duration: 0.2 }}
+      className="flex items-start gap-3 p-3 rounded-2xl border border-sky-100 bg-sky-50/40 group/exam"
+    >
+      <div className="w-7 h-7 rounded-xl bg-sky-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <FlaskConical className="w-3.5 h-3.5 text-sky-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-gray-800 leading-tight">{exam.testTitle}</p>
+        <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
+          <Calendar className="w-3 h-3" /> {dateLabel}
+        </div>
+      </div>
+      <div className="flex items-center gap-1 opacity-0 group-hover/exam:opacity-100 transition-opacity flex-shrink-0">
+        <button
+          onClick={onEdit}
+          className="w-6 h-6 rounded-lg hover:bg-sky-100 flex items-center justify-center text-gray-300 hover:text-sky-500 transition-colors cursor-pointer"
+        >
+          <Pencil className="w-3 h-3" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="w-6 h-6 rounded-lg hover:bg-red-100 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors cursor-pointer"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 // ─── Empty state ───────────────────────────────────────────────────────────────
 
-function EmptyState() {
+interface EmptyStateProps {
+  exams: ScheduledExam[];
+  onScheduleTest: () => void;
+  onEditExam: (exam: ScheduledExam) => void;
+  onDeleteExam: (id: string) => void;
+}
+
+function EmptyState({ exams, onScheduleTest, onEditExam, onDeleteExam }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-64 text-center px-6 py-12">
-      <div className="w-14 h-14 rounded-3xl bg-violet-50 flex items-center justify-center mb-4">
-        <MousePointerClick className="w-7 h-7 text-violet-300" />
+    <div className="p-5 space-y-5">
+      {/* Hint */}
+      <div className="flex flex-col items-center text-center pt-6 pb-2">
+        <div className="w-14 h-14 rounded-3xl bg-violet-50 flex items-center justify-center mb-4">
+          <MousePointerClick className="w-7 h-7 text-violet-300" />
+        </div>
+        <p className="text-sm font-semibold text-gray-500">Wybierz temat</p>
+        <p className="text-xs text-gray-400 mt-1">
+          Kliknij dowolny temat z listy, aby zobaczyć szczegóły,{' '}
+          <button
+            onClick={onScheduleTest}
+            className="text-sky-500 font-semibold hover:underline cursor-pointer"
+          >
+            lub zaplanuj test
+          </button>
+        </p>
       </div>
-      <p className="text-sm font-semibold text-gray-500">Wybierz temat</p>
-      <p className="text-xs text-gray-400 mt-1 max-w-[180px]">
-        Kliknij dowolny temat z listy, aby zobaczyć szczegóły
-      </p>
+
+      {/* Scheduled exams for class */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <SectionLabel icon={<FlaskConical className="w-3.5 h-3.5" />}>
+            Zaplanowane egzaminy
+            {exams.length > 0 && (
+              <span className="ml-1.5 px-1.5 py-0.5 bg-sky-100 text-sky-600 rounded-full text-[10px] font-bold normal-case tracking-normal">
+                {exams.length}
+              </span>
+            )}
+          </SectionLabel>
+        </div>
+
+        <div className="space-y-2">
+          <AnimatePresence>
+            {exams
+              .slice()
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map(exam => (
+                <ExamCard
+                  key={exam.id}
+                  exam={exam}
+                  onEdit={() => onEditExam(exam)}
+                  onDelete={() => onDeleteExam(exam.id)}
+                />
+              ))}
+          </AnimatePresence>
+
+          {exams.length === 0 && (
+            <p className="text-xs text-gray-400 text-center py-2">Brak zaplanowanych egzaminów</p>
+          )}
+
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Plus className="w-3.5 h-3.5" />}
+            onClick={onScheduleTest}
+            className="w-full justify-center mt-1"
+          >
+            Zaplanuj egzamin
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -68,22 +177,38 @@ interface Props {
   engagement: TopicEngagement | undefined;
   cls: Class | undefined;
   homeworkList: Homework[];
+  examList: ScheduledExam[];          // all exams for this class
   onClose: () => void;
   onOpenAddMaterial: (type: 'note' | 'recording', topicId: string, topicName: string) => void;
   onOpenAddHomework: (topicId: string, topicName: string) => void;
   onDeleteHomework: (id: string) => void;
+  onScheduleTest: () => void;
+  onEditExam: (exam: ScheduledExam) => void;
+  onDeleteExam: (id: string) => void;
 }
 
 export function LessonDetailPanel({
-  topic, status, engagement, cls, homeworkList,
+  topic, status, engagement, cls,
+  homeworkList, examList,
   onClose, onOpenAddMaterial, onOpenAddHomework, onDeleteHomework,
+  onScheduleTest, onEditExam, onDeleteExam,
 }: Props) {
+  // exams relevant to this topic
+  const topicExams = topic
+    ? examList.filter(e => e.topicIds.includes(topic.id) || e.topicIds.length === 0)
+    : examList;
+
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-card flex flex-col overflow-hidden">
       <AnimatePresence mode="wait">
         {!topic || !cls ? (
           <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <EmptyState />
+            <EmptyState
+              exams={examList}
+              onScheduleTest={onScheduleTest}
+              onEditExam={onEditExam}
+              onDeleteExam={onDeleteExam}
+            />
           </motion.div>
         ) : (
           <motion.div
@@ -120,8 +245,6 @@ export function LessonDetailPanel({
               {/* ── Zaangażowanie ───────────────────────────────────────────── */}
               <div>
                 <SectionLabel icon={<BarChart2 className="w-3.5 h-3.5" />}>Zaangażowanie</SectionLabel>
-
-                {/* Stat chips */}
                 <div className="grid grid-cols-3 gap-2 mb-3">
                   <div className="p-2.5 rounded-2xl bg-gray-50 text-center">
                     <div className="text-lg font-bold text-gray-800">{cls.studentCount}</div>
@@ -136,16 +259,9 @@ export function LessonDetailPanel({
                     <div className="text-[10px] text-amber-500 leading-tight mt-0.5">Nagranie</div>
                   </div>
                 </div>
-
-                {/* Progress bars */}
                 <div className="space-y-2.5 p-3 rounded-2xl bg-gray-50 border border-gray-100">
                   {status?.hasNote && engagement ? (
-                    <EngagementBar
-                      label="Otworzyło notatkę"
-                      count={engagement.studentsOpenedNote}
-                      total={cls.studentCount}
-                      color="#8b5cf6"
-                    />
+                    <EngagementBar label="Otworzyło notatkę" count={engagement.studentsOpenedNote} total={cls.studentCount} color="#8b5cf6" />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-400">
                       <FileText className="w-3.5 h-3.5 flex-shrink-0" />
@@ -153,12 +269,7 @@ export function LessonDetailPanel({
                     </div>
                   )}
                   {status?.hasRecording && engagement ? (
-                    <EngagementBar
-                      label="Odsłuchało nagranie"
-                      count={engagement.studentsListenedRecording}
-                      total={cls.studentCount}
-                      color="#f59e0b"
-                    />
+                    <EngagementBar label="Odsłuchało nagranie" count={engagement.studentsListenedRecording} total={cls.studentCount} color="#f59e0b" />
                   ) : (
                     <div className="flex items-center gap-2 text-gray-400">
                       <Mic className="w-3.5 h-3.5 flex-shrink-0" />
@@ -171,25 +282,18 @@ export function LessonDetailPanel({
               {/* ── Materiały ───────────────────────────────────────────────── */}
               <div>
                 <SectionLabel icon={<BookOpen className="w-3.5 h-3.5" />}>Materiały</SectionLabel>
-
                 <div className="space-y-2">
-                  {/* Note row */}
                   <div className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 bg-gray-50/60">
                     <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
                       <FileText className="w-4 h-4 text-violet-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-gray-800">Notatka</div>
-                      <div className="text-xs text-gray-400">
-                        {status?.hasNote ? 'Dostępna dla uczniów' : 'Brak notatki'}
-                      </div>
+                      <div className="text-xs text-gray-400">{status?.hasNote ? 'Dostępna dla uczniów' : 'Brak notatki'}</div>
                     </div>
-                    {status?.hasNote && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    )}
+                    {status?.hasNote && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
                     <Button
-                      variant={status?.hasNote ? 'secondary' : 'primary'}
-                      size="sm"
+                      variant={status?.hasNote ? 'secondary' : 'primary'} size="sm"
                       icon={status?.hasNote ? <Edit3 className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                       onClick={() => onOpenAddMaterial('note', topic.id, topic.name)}
                     >
@@ -197,23 +301,17 @@ export function LessonDetailPanel({
                     </Button>
                   </div>
 
-                  {/* Recording row */}
                   <div className="flex items-center gap-3 p-3 rounded-2xl border border-gray-100 bg-gray-50/60">
                     <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
                       <Mic className="w-4 h-4 text-amber-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-gray-800">Nagranie</div>
-                      <div className="text-xs text-gray-400">
-                        {status?.hasRecording ? 'Dostępne dla uczniów' : 'Brak nagrania'}
-                      </div>
+                      <div className="text-xs text-gray-400">{status?.hasRecording ? 'Dostępne dla uczniów' : 'Brak nagrania'}</div>
                     </div>
-                    {status?.hasRecording && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    )}
+                    {status?.hasRecording && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />}
                     <Button
-                      variant={status?.hasRecording ? 'secondary' : 'primary'}
-                      size="sm"
+                      variant={status?.hasRecording ? 'secondary' : 'primary'} size="sm"
                       icon={status?.hasRecording ? <Edit3 className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
                       onClick={() => onOpenAddMaterial('recording', topic.id, topic.name)}
                     >
@@ -232,17 +330,14 @@ export function LessonDetailPanel({
 
               {/* ── Zadania domowe ───────────────────────────────────────────── */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <SectionLabel icon={<ClipboardList className="w-3.5 h-3.5" />}>
-                    Zadania domowe
-                    {homeworkList.length > 0 && (
-                      <span className="ml-1.5 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full text-[10px] font-bold normal-case tracking-normal">
-                        {homeworkList.length}
-                      </span>
-                    )}
-                  </SectionLabel>
-                </div>
-
+                <SectionLabel icon={<ClipboardList className="w-3.5 h-3.5" />}>
+                  Zadania domowe
+                  {homeworkList.length > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full text-[10px] font-bold normal-case tracking-normal">
+                      {homeworkList.length}
+                    </span>
+                  )}
+                </SectionLabel>
                 <div className="space-y-2">
                   <AnimatePresence>
                     {homeworkList.map(hw => (
@@ -266,9 +361,7 @@ export function LessonDetailPanel({
                               </span>
                             )}
                           </div>
-                          {hw.description && (
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{hw.description}</p>
-                          )}
+                          {hw.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{hw.description}</p>}
                           {hw.dueDate && (
                             <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
                               <Calendar className="w-3 h-3" />
@@ -285,19 +378,56 @@ export function LessonDetailPanel({
                       </motion.div>
                     ))}
                   </AnimatePresence>
-
                   {homeworkList.length === 0 && (
-                    <p className="text-xs text-gray-400 text-center py-2">Brak zadań domowych dla tego tematu</p>
+                    <p className="text-xs text-gray-400 text-center py-1">Brak zadań domowych dla tego tematu</p>
                   )}
-
                   <Button
-                    variant="secondary"
-                    size="sm"
+                    variant="secondary" size="sm"
                     icon={<Plus className="w-3.5 h-3.5" />}
                     onClick={() => onOpenAddHomework(topic.id, topic.name)}
                     className="w-full justify-center mt-1"
                   >
                     Dodaj zadanie domowe
+                  </Button>
+                </div>
+              </div>
+
+              {/* ── Egzaminy dotyczące tego tematu ──────────────────────────── */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <SectionLabel icon={<FlaskConical className="w-3.5 h-3.5" />}>
+                    Egzaminy
+                    {topicExams.length > 0 && (
+                      <span className="ml-1.5 px-1.5 py-0.5 bg-sky-100 text-sky-600 rounded-full text-[10px] font-bold normal-case tracking-normal">
+                        {topicExams.length}
+                      </span>
+                    )}
+                  </SectionLabel>
+                </div>
+                <div className="space-y-2">
+                  <AnimatePresence>
+                    {topicExams
+                      .slice()
+                      .sort((a, b) => a.date.localeCompare(b.date))
+                      .map(exam => (
+                        <ExamCard
+                          key={exam.id}
+                          exam={exam}
+                          onEdit={() => onEditExam(exam)}
+                          onDelete={() => onDeleteExam(exam.id)}
+                        />
+                      ))}
+                  </AnimatePresence>
+                  {topicExams.length === 0 && (
+                    <p className="text-xs text-gray-400 text-center py-1">Brak zaplanowanych egzaminów</p>
+                  )}
+                  <Button
+                    variant="secondary" size="sm"
+                    icon={<Plus className="w-3.5 h-3.5" />}
+                    onClick={onScheduleTest}
+                    className="w-full justify-center mt-1"
+                  >
+                    Zaplanuj egzamin
                   </Button>
                 </div>
               </div>
