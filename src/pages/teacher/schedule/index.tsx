@@ -6,16 +6,17 @@ import { Card, SectionTitle } from '../../../components/ui/Card';
 import { mockClasses } from '../../../data/mockData';
 import type { Class, CurriculumTopic, TopicStatus } from '../../../types';
 
-import { ClassHeader }        from './ClassHeader';
-import { CurriculumList }     from './CurriculumList';
-import { LessonDetailPanel }  from './LessonDetailPanel';
-import { AddMaterialModal }   from './AddMaterialModal';
-import { AddClassModal }      from './AddClassModal';
-import { AddHomeworkModal }   from './AddHomeworkModal';
-import { ScheduleTestModal }  from './ScheduleTestModal';
-import type { TopicEngagement } from './LessonDetailPanel';
-import type { Homework }        from './AddHomeworkModal';
-import type { ScheduledExam }   from './ScheduleTestModal';
+import { ClassHeader }           from './ClassHeader';
+import { CurriculumList }        from './CurriculumList';
+import { LessonDetailPanel }     from './LessonDetailPanel';
+import { ScheduledExamsSection } from './ScheduledExamsSection';
+import { AddMaterialModal }      from './AddMaterialModal';
+import { AddClassModal }         from './AddClassModal';
+import { AddHomeworkModal }      from './AddHomeworkModal';
+import { ScheduleTestModal }     from './ScheduleTestModal';
+import type { TopicEngagement }  from './LessonDetailPanel';
+import type { Homework }         from './AddHomeworkModal';
+import type { ScheduledExam }    from './ScheduleTestModal';
 
 // ─── Mock engagement data ─────────────────────────────────────────────────────
 
@@ -81,12 +82,15 @@ export function Schedule() {
     topicName: string;
   } | null>(null);
 
-  // null = closed, undefined = new exam, ScheduledExam = editing existing
+  // null = closed, undefined = new exam, ScheduledExam = editing
   const [scheduleTestModal, setScheduleTestModal] = useState<ScheduledExam | undefined | null>(null);
 
   const selectedClass = myClasses.find(c => c.id === selectedClassId);
+  const classExams    = examItems.filter(e => e.classId === selectedClassId);
 
-  const classExams = examItems.filter(e => e.classId === selectedClassId);
+  const topicHomework = lessonDetail
+    ? homeworkItems.filter(h => h.topicId === lessonDetail.topic.id && h.classId === selectedClassId)
+    : [];
 
   const addClass = (cls: Class) => {
     setMyClasses(prev => [...prev, cls]);
@@ -104,10 +108,6 @@ export function Schedule() {
     setLessonDetail({ topic, status, engagement });
   };
 
-  const topicHomework = lessonDetail
-    ? homeworkItems.filter(h => h.topicId === lessonDetail.topic.id && h.classId === selectedClassId)
-    : [];
-
   const handleUpsertExam = (exam: ScheduledExam) => {
     setExamItems(prev => {
       const exists = prev.find(e => e.id === exam.id);
@@ -124,13 +124,15 @@ export function Schedule() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
-        className="relative max-w-7xl mx-auto"
+        className="relative max-w-7xl mx-auto space-y-6"
       >
-        <div className="mb-6">
+        {/* Page title */}
+        <div>
           <h1 className="text-3xl font-extrabold text-gray-800">Klasy & Program nauczania</h1>
           <p className="text-gray-500 mt-1">Śledź realizację podstawy programowej i zarządzaj materiałami</p>
         </div>
 
+        {/* Class header */}
         <ClassHeader
           selectedClass={selectedClass}
           classes={myClasses}
@@ -138,10 +140,8 @@ export function Schedule() {
           onAddClass={() => setShowAddClass(true)}
         />
 
-        {/* Split layout */}
+        {/* ── Split layout: program | temat ──────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
-
-          {/* Left: curriculum list */}
           {selectedClass ? (
             <Card padding="lg">
               <SectionTitle icon={<BookOpen className="w-4 h-4" />} className="mb-5">
@@ -166,7 +166,6 @@ export function Schedule() {
             </Card>
           )}
 
-          {/* Right: sticky detail panel */}
           <div className="lg:sticky lg:top-6">
             <LessonDetailPanel
               topic={lessonDetail?.topic ?? null}
@@ -174,7 +173,6 @@ export function Schedule() {
               engagement={lessonDetail?.engagement}
               cls={selectedClass}
               homeworkList={topicHomework}
-              examList={classExams}
               onClose={() => setLessonDetail(null)}
               onOpenAddMaterial={(type, topicId, topicName) =>
                 setAddMaterialModal({ type, topicId, topicName })
@@ -186,13 +184,17 @@ export function Schedule() {
                 setHomeworkItems(prev => prev.filter(h => h.id !== id))
               }
               onScheduleTest={() => setScheduleTestModal(undefined)}
-              onEditExam={exam => setScheduleTestModal(exam)}
-              onDeleteExam={id =>
-                setExamItems(prev => prev.filter(e => e.id !== id))
-              }
             />
           </div>
         </div>
+
+        {/* ── Zaplanowane egzaminy ────────────────────────────────────────── */}
+        <ScheduledExamsSection
+          exams={classExams}
+          onScheduleTest={() => setScheduleTestModal(undefined)}
+          onEditExam={exam => setScheduleTestModal(exam)}
+          onDeleteExam={id => setExamItems(prev => prev.filter(e => e.id !== id))}
+        />
       </motion.div>
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}
