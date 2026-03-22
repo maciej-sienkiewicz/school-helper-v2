@@ -1,10 +1,11 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Calendar, Video,
-  FlaskConical, User, GraduationCap, Sparkles, LayoutTemplate
+  FlaskConical, User, GraduationCap, Sparkles, LayoutTemplate, LogOut
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { mockTeacher } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
   { to: '/teacher', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -16,6 +17,14 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <aside className="w-64 flex-shrink-0 h-screen sticky top-0 flex flex-col overflow-hidden">
       {/* Gradient background */}
@@ -70,7 +79,7 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Teacher card */}
+        {/* Teacher card + logout */}
         <div className="mt-4 p-3 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center text-white font-bold text-sm shadow">
@@ -80,6 +89,13 @@ export function Sidebar() {
               <div className="text-white text-sm font-semibold truncate">{mockTeacher.name}</div>
               <div className="text-violet-300 text-xs truncate">{mockTeacher.subjects.join(', ')}</div>
             </div>
+            <button
+              onClick={handleLogout}
+              title="Wyloguj"
+              className="w-7 h-7 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5 text-violet-200" />
+            </button>
           </div>
         </div>
       </div>
