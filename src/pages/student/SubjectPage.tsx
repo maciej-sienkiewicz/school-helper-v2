@@ -903,23 +903,143 @@ function TabStudyLab({ subject }: { subject: string }) {
   );
 }
 
+// ─── Tab 4: Eksploruj ─────────────────────────────────────────────────────────
+
+const SCOPE_LABEL: Record<ExternalMaterial['scope'], string> = {
+  school:      'Inna szkoła w mieście',
+  county:      'Inny powiat',
+  voivodeship: 'Inne województwo',
+  all:         'Cała Polska',
+};
+const SCOPE_ICON: Record<ExternalMaterial['scope'], typeof School> = {
+  school: School, county: MapPin, voivodeship: Globe, all: Globe,
+};
+
+function ExternalCard({ mat }: { mat: ExternalMaterial }) {
+  const [noteOpen,   setNoteOpen]   = useState(false);
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const ScopeIcon = SCOPE_ICON[mat.scope];
+
+  return (
+    <>
+      <AnimatePresence>
+        {noteOpen && mat.noteContent && (
+          <NoteModal content={mat.noteContent} topicName={mat.topicName} onClose={() => setNoteOpen(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Amber left border – "Społeczność" */}
+      <div className="rounded-2xl bg-white border border-amber-200 border-l-4 overflow-hidden" style={{ borderLeftColor: '#f59e0b' }}>
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl flex-shrink-0" style={{ backgroundColor: mat.thumbnailColor }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                <span className="font-bold text-gray-800 text-sm">{mat.topicName}</span>
+                <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 border border-amber-200 rounded-full font-medium flex-shrink-0">
+                  Społeczność
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 mb-2">{mat.unitName}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                  <ScopeIcon className="w-3 h-3" /> {SCOPE_LABEL[mat.scope]}
+                </span>
+                <span className="text-xs text-gray-400">{mat.schoolName}, {mat.city}</span>
+                <span className="text-xs text-gray-400 flex items-center gap-0.5">
+                  <ThumbsUp className="w-3 h-3" /> {mat.likes}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {mat.noteContent && (
+              <button
+                onClick={() => setNoteOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-semibold cursor-pointer min-h-[44px]"
+              >
+                <FileText className="w-3.5 h-3.5" /> Notatka
+              </button>
+            )}
+            {mat.recordingDurationSeconds && (
+              <button
+                onClick={() => setPlayerOpen(p => !p)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-semibold cursor-pointer min-h-[44px]"
+              >
+                <Play className="w-3.5 h-3.5" /> {playerOpen ? 'Ukryj' : 'Słuchaj'}
+              </button>
+            )}
+          </div>
+
+          <AnimatePresence>
+            {playerOpen && mat.recordingDurationSeconds && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="pt-3">
+                  <MockPlayer durationSeconds={mat.recordingDurationSeconds} color="#f59e0b" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function TabExplore({ subject }: { subject: string }) {
   const materials = mockExternalMaterials.filter(m => m.subject === subject);
+
   if (materials.length === 0)
     return (
       <Card padding="lg" className="text-center py-10">
         <Globe className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-        <p className="text-gray-500 text-sm">Brak materiałów z innych szkół.</p>
+        <p className="text-gray-500 text-sm">Brak materiałów z innych szkół z tego przedmiotu.</p>
       </Card>
     );
+
   return (
-    <div className="space-y-3">
-      {materials.map(m => (
-        <Card key={m.id} padding="md">
-          <p className="font-bold text-sm text-gray-800">{m.topicName}</p>
-          <p className="text-xs text-gray-500">{m.schoolName}, {m.city}</p>
-        </Card>
-      ))}
+    <div className="space-y-4">
+      {/* Amber informational banner */}
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 border-2 border-amber-200">
+        <Globe className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <p className="text-sm font-bold text-amber-800">Eksploruj · Materiały Społeczności</p>
+            <span className="text-xs px-2 py-0.5 bg-amber-200 text-amber-800 rounded-full font-medium">Zewnętrzne</span>
+          </div>
+          <p className="text-xs text-amber-700 mt-0.5">
+            Materiały od nauczycieli z innych szkół. Mogą różnić się od programu Twojej klasy – traktuj je jako uzupełnienie, nie zastępstwo oficjalnych materiałów.
+          </p>
+        </div>
+      </div>
+
+      {/* Groups by scope with section dividers */}
+      {(['voivodeship', 'county', 'school', 'all'] as ExternalMaterial['scope'][]).map(scope => {
+        const group = materials.filter(m => m.scope === scope);
+        if (!group.length) return null;
+        const ScopeIcon = SCOPE_ICON[scope];
+        return (
+          <div key={scope}>
+            {/* Section divider */}
+            <div className="flex items-center gap-2 mt-2 mb-3">
+              <ScopeIcon className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">{SCOPE_LABEL[scope]}</span>
+              <div className="flex-1 h-px bg-amber-100" />
+            </div>
+            {/* Indented group */}
+            <div className="space-y-2 pl-2 border-l-2 border-amber-100 ml-1">
+              {group.map(m => <ExternalCard key={m.id} mat={m} />)}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
