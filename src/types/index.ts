@@ -259,6 +259,12 @@ export interface StudentHomework {
   attachmentNote?: string; // link do notatki z materiałem
 }
 
+export interface ExploreComment {
+  id: string;
+  text: string;
+  timestamp: string; // ISO
+}
+
 export interface ExternalMaterial {
   id: string;
   subject: string;
@@ -269,8 +275,11 @@ export interface ExternalMaterial {
   schoolName: string;
   city: string;
   teacherInitials: string;
+  teacherName: string;
   sharedAt: string;
   likes: number;
+  views: number;
+  comments?: ExploreComment[];
   noteContent?: string;
   recordingDurationSeconds?: number;
   thumbnailColor: string;
