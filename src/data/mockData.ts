@@ -570,8 +570,8 @@ Zawsze wstawiamy wynik z powrotem do równania i sprawdzamy, czy obie strony są
     likes: 14,
     hasLiked: false,
     comments: [
-      { id: 'sc1', studentName: 'Zofia Nowak', text: 'Super notatka, wszystko jasne!', createdAt: '2026-03-20T14:30:00' },
-      { id: 'sc2', studentName: 'Tomek Barański', text: 'Czy te przykłady będą na sprawdzianie?', createdAt: '2026-03-21T09:15:00' },
+      { id: 'sc1', studentName: 'anonim', text: 'Super notatka, wszystko jasne!', createdAt: '2026-03-20T14:30:00' },
+      { id: 'sc2', studentName: 'anonim', text: 'Czy te przykłady będą na sprawdzianie?', createdAt: '2026-03-21T09:15:00' },
     ],
   },
   {
@@ -607,7 +607,7 @@ Potęga a^n = a × a × ... × a (n razy), gdzie a to podstawa, n to wykładnik.
     likes: 9,
     hasLiked: true,
     comments: [
-      { id: 'sc3', studentName: 'Kacper Wiśniewski', text: 'Dzięki, bardzo pomocne!', createdAt: '2026-03-18T16:00:00', isOwn: true },
+      { id: 'sc3', studentName: 'anonim', text: 'Dzięki, bardzo pomocne!', createdAt: '2026-03-18T16:00:00', isOwn: true },
     ],
   },
   {
@@ -649,7 +649,7 @@ Znajdź NWW mianowników, rozszerz ułamki, a następnie dodaj/odejmij liczniki.
     likes: 7,
     hasLiked: false,
     comments: [
-      { id: 'sc4', studentName: 'Marta Kowalczyk', text: 'Kiedy będzie notatka do tej lekcji?', createdAt: '2026-03-12T10:00:00' },
+      { id: 'sc4', studentName: 'anonim', text: 'Kiedy będzie notatka do tej lekcji?', createdAt: '2026-03-12T10:00:00' },
     ],
   },
   {

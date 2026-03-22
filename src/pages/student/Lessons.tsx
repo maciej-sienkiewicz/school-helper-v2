@@ -98,7 +98,7 @@ function LessonCard({ lesson }: { lesson: StudentLesson }) {
     if (!newComment.trim()) return;
     setComments(prev => [...prev, {
       id: `new-${Date.now()}`,
-      studentName: 'Kacper Wiśniewski',
+      studentName: 'anonim',
       text: newComment.trim(),
       createdAt: new Date().toISOString(),
       isOwn: true,
@@ -213,8 +213,14 @@ function LessonCard({ lesson }: { lesson: StudentLesson }) {
 
                 {/* Comments */}
                 <div>
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                    Komentarze ({comments.length})
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Komentarze ({comments.length})
+                    </div>
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <span className="w-3.5 h-3.5 rounded-full bg-gray-200 inline-flex items-center justify-center text-gray-500 font-bold leading-none" style={{ fontSize: 8 }}>?</span>
+                      Wszystkie komentarze są anonimowe
+                    </span>
                   </div>
                   {comments.length > 0 ? (
                     <div className="space-y-2 mb-3">
@@ -228,8 +234,8 @@ function LessonCard({ lesson }: { lesson: StudentLesson }) {
                           }`}
                         >
                           <div className="flex items-center gap-2 mb-1">
-                            <span className={`font-semibold text-xs ${c.isOwn ? 'text-sky-700' : 'text-gray-700'}`}>
-                              {c.studentName} {c.isOwn && '(Ty)'}
+                            <span className={`font-semibold text-xs ${c.isOwn ? 'text-sky-700' : 'text-gray-500'}`}>
+                              {c.isOwn ? 'Ty (anonimowo)' : 'Anonimowy uczeń'}
                             </span>
                             <span className="text-xs text-gray-400">
                               {format(parseISO(c.createdAt), "d MMM, HH:mm", { locale: pl })}
@@ -249,7 +255,7 @@ function LessonCard({ lesson }: { lesson: StudentLesson }) {
                       value={newComment}
                       onChange={e => setNewComment(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleAddComment()}
-                      placeholder="Napisz komentarz..."
+                      placeholder="Napisz anonimowy komentarz lub pytanie..."
                       className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-transparent"
                     />
                     <button
