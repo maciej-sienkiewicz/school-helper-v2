@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, X, Check, Loader2, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import type { FlashcardPhase } from './types';
 
 interface Props {
@@ -9,6 +10,12 @@ interface Props {
 }
 
 export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  useEffect(() => {
+    if (state.phase === 'preview') setIsFlipped(false);
+  }, [state.phase]);
+
   return (
     <motion.div
       className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center"
@@ -22,7 +29,7 @@ export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
       />
 
       <motion.div
-        className="relative w-full max-w-md mx-4 mb-6 sm:mb-0 bg-white rounded-3xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-md mx-4 mb-6 sm:mb-0 bg-white rounded-3xl shadow-2xl"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
@@ -58,7 +65,7 @@ export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900">Nowa fiszka</p>
-                    <p className="text-xs text-gray-400">Sprawdź i zatwierdź</p>
+                    <p className="text-xs text-gray-400">Kliknij kartę, aby ją obrócić</p>
                   </div>
                 </div>
                 <button
@@ -69,15 +76,65 @@ export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
                 </button>
               </div>
 
-              <div className="space-y-2 mb-5">
-                <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-2">Przód — pytanie</p>
-                  <p className="text-sm font-semibold text-gray-800 leading-snug">{state.card.front}</p>
+              {/* 3D Flip Card */}
+              <div className="mb-4 select-none" style={{ perspective: '1200px' }}>
+                <div
+                  className="relative w-full cursor-pointer"
+                  style={{
+                    height: '200px',
+                    transformStyle: 'preserve-3d',
+                    transition: 'transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                  }}
+                  onClick={() => setIsFlipped(f => !f)}
+                >
+                  {/* Front face — hasło */}
+                  <div
+                    className="absolute inset-0 bg-violet-50 rounded-2xl p-5 border border-violet-100 flex flex-col"
+                    style={{ backfaceVisibility: 'hidden' }}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">
+                      Przód — hasło
+                    </p>
+                    <p className="text-base font-semibold text-gray-800 leading-snug flex-1 overflow-auto">
+                      {state.card.front}
+                    </p>
+                    <p className="text-[11px] text-violet-300 mt-3 text-center">
+                      Kliknij, aby zobaczyć wyjaśnienie →
+                    </p>
+                  </div>
+
+                  {/* Back face — wyjaśnienie */}
+                  <div
+                    className="absolute inset-0 bg-slate-50 rounded-2xl p-5 border border-slate-200 flex flex-col"
+                    style={{
+                      backfaceVisibility: 'hidden',
+                      transform: 'rotateY(180deg)',
+                    }}
+                  >
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
+                      Tył — wyjaśnienie
+                    </p>
+                    <p className="text-sm text-gray-700 leading-relaxed flex-1 overflow-auto">
+                      {state.card.back}
+                    </p>
+                    <p className="text-[11px] text-slate-300 mt-3 text-center">
+                      ← Kliknij, aby wrócić do hasła
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Tył — odpowiedź</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">{state.card.back}</p>
-                </div>
+              </div>
+
+              {/* Dot indicators */}
+              <div className="flex justify-center gap-2 mb-5">
+                <div
+                  className="w-2 h-2 rounded-full transition-colors duration-300"
+                  style={{ background: !isFlipped ? '#7c3aed' : '#e2e8f0' }}
+                />
+                <div
+                  className="w-2 h-2 rounded-full transition-colors duration-300"
+                  style={{ background: isFlipped ? '#64748b' : '#e2e8f0' }}
+                />
               </div>
 
               <div className="flex gap-2">
