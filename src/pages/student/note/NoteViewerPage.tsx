@@ -258,26 +258,7 @@ export function NoteViewerPage() {
       {/* Audio player – sliding right panel */}
       {hasAudio && recording && (
         <div className="fixed bottom-6 right-0 z-40 flex items-end">
-          {/* Panel */}
-          <AnimatePresence initial={false}>
-            {audioExpanded && (
-              <motion.div
-                key="audio-panel"
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 320, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                className="overflow-hidden bg-white border border-gray-100 shadow-lg rounded-l-2xl"
-              >
-                <div className="w-80 p-4 space-y-1">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nagranie z lekcji</p>
-                  <MockPlayer durationSeconds={recording.durationSeconds} color={recording.thumbnailColor ?? '#7c3aed'} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Toggle tab – fixed size, never changes */}
+          {/* Toggle tab – fixed size, never changes, always leftmost so it gets pushed left by panel */}
           <button
             onClick={() => setAudioExpanded(e => !e)}
             className="flex flex-col items-center justify-center gap-1.5 w-9 h-20 rounded-l-2xl shadow-lg border border-r-0 border-gray-100 bg-white hover:bg-gray-50 transition-colors cursor-pointer flex-shrink-0"
@@ -288,6 +269,25 @@ export function NoteViewerPage() {
             </div>
             <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${audioExpanded ? 'rotate-[-90deg]' : 'rotate-90'}`} />
           </button>
+
+          {/* Panel – grows to the right, pushes tab left */}
+          <AnimatePresence initial={false}>
+            {audioExpanded && (
+              <motion.div
+                key="audio-panel"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 320, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="overflow-hidden bg-white border border-l-0 border-gray-100 shadow-lg rounded-r-none"
+              >
+                <div className="w-80 p-4 space-y-1">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nagranie z lekcji</p>
+                  <MockPlayer durationSeconds={recording.durationSeconds} color={recording.thumbnailColor ?? '#7c3aed'} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
