@@ -9,6 +9,82 @@ interface Props {
   onDiscard: () => void;
 }
 
+function CardFace({
+  side,
+  text,
+  flipped,
+}: {
+  side: 'front' | 'back';
+  text: string;
+  flipped: boolean;
+}) {
+  const isFront = side === 'front';
+
+  const gradient = isFront
+    ? 'linear-gradient(145deg, #7c3aed 0%, #4c1d95 100%)'
+    : 'linear-gradient(145deg, #1d4ed8 0%, #1e3a8a 100%)';
+
+  const label = isFront ? 'HASŁO' : 'WYJAŚNIENIE';
+
+  const faceStyle: React.CSSProperties = {
+    backfaceVisibility: 'hidden',
+    transform: isFront ? undefined : 'rotateY(180deg)',
+    background: gradient,
+  };
+
+  return (
+    <div
+      className="absolute inset-0 rounded-2xl flex flex-col overflow-hidden shadow-lg"
+      style={faceStyle}
+    >
+      {/* Subtle dot-grid pattern overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      />
+
+      {/* Inner frame border */}
+      <div className="absolute inset-3 rounded-xl border border-white/20 pointer-events-none" />
+
+      {/* Corner accents */}
+      <div className="absolute top-5 left-5 w-4 h-4 border-t-2 border-l-2 border-white/30 rounded-tl-sm" />
+      <div className="absolute top-5 right-5 w-4 h-4 border-t-2 border-r-2 border-white/30 rounded-tr-sm" />
+      <div className="absolute bottom-5 left-5 w-4 h-4 border-b-2 border-l-2 border-white/30 rounded-bl-sm" />
+      <div className="absolute bottom-5 right-5 w-4 h-4 border-b-2 border-r-2 border-white/30 rounded-br-sm" />
+
+      {/* Label top */}
+      <div className="relative flex justify-center pt-6">
+        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">
+          {label}
+        </span>
+      </div>
+
+      {/* Main text — centered */}
+      <div className="relative flex-1 flex items-center justify-center px-8 py-2">
+        <p
+          className="text-white text-center font-bold leading-snug"
+          style={{
+            fontSize: text.length > 80 ? '0.85rem' : text.length > 40 ? '1rem' : '1.2rem',
+            textShadow: '0 1px 8px rgba(0,0,0,0.3)',
+          }}
+        >
+          {text}
+        </p>
+      </div>
+
+      {/* Flip hint bottom */}
+      <div className="relative flex justify-center pb-5">
+        <span className="text-[9px] font-semibold tracking-widest text-white/30 uppercase">
+          {isFront ? (flipped ? '' : 'kliknij aby obrócić') : 'kliknij aby wrócić'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -24,7 +100,7 @@ export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
       exit={{ opacity: 0 }}
     >
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={state.phase !== 'loading' ? onDiscard : undefined}
       />
 
@@ -58,6 +134,7 @@ export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="p-5"
             >
+              {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
@@ -78,65 +155,44 @@ export function FlashcardPreviewModal({ state, onConfirm, onDiscard }: Props) {
 
               {/* 3D Flip Card */}
               <div className="mb-4 select-none" style={{ perspective: '1200px' }}>
-                <div
+                <motion.div
                   className="relative w-full cursor-pointer"
                   style={{
-                    height: '200px',
+                    height: '240px',
                     transformStyle: 'preserve-3d',
-                    transition: 'transform 0.55s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
                   }}
+                  animate={{ rotateY: isFlipped ? 180 : 0 }}
+                  transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
                   onClick={() => setIsFlipped(f => !f)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  {/* Front face — hasło */}
-                  <div
-                    className="absolute inset-0 bg-violet-50 rounded-2xl p-5 border border-violet-100 flex flex-col"
-                    style={{ backfaceVisibility: 'hidden' }}
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">
-                      Przód — hasło
-                    </p>
-                    <p className="text-base font-semibold text-gray-800 leading-snug flex-1 overflow-auto">
-                      {state.card.front}
-                    </p>
-                    <p className="text-[11px] text-violet-300 mt-3 text-center">
-                      Kliknij, aby zobaczyć wyjaśnienie →
-                    </p>
-                  </div>
-
-                  {/* Back face — wyjaśnienie */}
-                  <div
-                    className="absolute inset-0 bg-slate-50 rounded-2xl p-5 border border-slate-200 flex flex-col"
-                    style={{
-                      backfaceVisibility: 'hidden',
-                      transform: 'rotateY(180deg)',
-                    }}
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">
-                      Tył — wyjaśnienie
-                    </p>
-                    <p className="text-sm text-gray-700 leading-relaxed flex-1 overflow-auto">
-                      {state.card.back}
-                    </p>
-                    <p className="text-[11px] text-slate-300 mt-3 text-center">
-                      ← Kliknij, aby wrócić do hasła
-                    </p>
-                  </div>
-                </div>
+                  <CardFace side="front" text={state.card.front} flipped={isFlipped} />
+                  <CardFace side="back" text={state.card.back} flipped={isFlipped} />
+                </motion.div>
               </div>
 
               {/* Dot indicators */}
               <div className="flex justify-center gap-2 mb-5">
                 <div
-                  className="w-2 h-2 rounded-full transition-colors duration-300"
-                  style={{ background: !isFlipped ? '#7c3aed' : '#e2e8f0' }}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width: !isFlipped ? '20px' : '8px',
+                    height: '8px',
+                    background: !isFlipped ? '#7c3aed' : '#e2e8f0',
+                  }}
                 />
                 <div
-                  className="w-2 h-2 rounded-full transition-colors duration-300"
-                  style={{ background: isFlipped ? '#64748b' : '#e2e8f0' }}
+                  className="rounded-full transition-all duration-300"
+                  style={{
+                    width: isFlipped ? '20px' : '8px',
+                    height: '8px',
+                    background: isFlipped ? '#1d4ed8' : '#e2e8f0',
+                  }}
                 />
               </div>
 
+              {/* Actions */}
               <div className="flex gap-2">
                 <button
                   onClick={onDiscard}
