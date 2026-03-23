@@ -115,20 +115,28 @@ export function NoteViewerPage() {
   }, []);
 
   // Flashcard flow
-  const handleAddFlashcard = useCallback(async (text: string) => {
+  const handleAddFlashcard = useCallback((text: string) => {
     setSelection(null);
+    setFlashcardPhase({ phase: 'choose', sourceText: text });
+  }, []);
+
+  const handleChooseAI = useCallback(async (sourceText: string) => {
     setFlashcardPhase({ phase: 'loading' });
     try {
-      const card = await generateFlashcard(text);
-      setFlashcardPhase({ phase: 'preview', card, sourceText: text });
+      const card = await generateFlashcard(sourceText);
+      setFlashcardPhase({ phase: 'preview', card, sourceText });
     } catch {
       setFlashcardPhase({ phase: 'idle' });
     }
   }, []);
 
-  const handleConfirmFlashcard = useCallback(() => {
+  const handleChooseManual = useCallback((sourceText: string) => {
+    setFlashcardPhase({ phase: 'preview', card: { front: '', back: '' }, sourceText });
+  }, []);
+
+  const handleConfirmFlashcard = useCallback((card: { front: string; back: string }) => {
     if (flashcardPhase.phase !== 'preview') return;
-    flashcardStore.add({ front: flashcardPhase.card.front, back: flashcardPhase.card.back, sourceText: flashcardPhase.sourceText, noteTopicName: note?.topicName ?? '' });
+    flashcardStore.add({ front: card.front, back: card.back, sourceText: flashcardPhase.sourceText, noteTopicName: note?.topicName ?? '' });
     setFlashcardPhase({ phase: 'saved' });
     setTimeout(() => setFlashcardPhase({ phase: 'idle' }), 2200);
   }, [flashcardPhase, note]);
@@ -232,7 +240,7 @@ export function NoteViewerPage() {
       {/* Flashcard preview */}
       <AnimatePresence>
         {flashcardPhase.phase !== 'idle' && (
-          <FlashcardPreviewModal key="fc-modal" state={flashcardPhase} onConfirm={handleConfirmFlashcard} onDiscard={() => setFlashcardPhase({ phase: 'idle' })} />
+          <FlashcardPreviewModal key="fc-modal" state={flashcardPhase} onConfirm={handleConfirmFlashcard} onDiscard={() => setFlashcardPhase({ phase: 'idle' })} onChooseAI={handleChooseAI} onChooseManual={handleChooseManual} />
         )}
       </AnimatePresence>
 

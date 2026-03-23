@@ -11,6 +11,7 @@ export interface SelectionState {
 
 export type FlashcardPhase =
   | { phase: 'idle' }
+  | { phase: 'choose'; sourceText: string }
   | { phase: 'loading' }
   | { phase: 'preview'; card: { front: string; back: string }; sourceText: string }
   | { phase: 'saved' };
