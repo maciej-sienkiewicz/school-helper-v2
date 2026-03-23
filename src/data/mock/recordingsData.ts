@@ -52,8 +52,8 @@ export const mockRecordings: Recording[] = [
   {
     id: 'r8', date: '2026-03-20T08:00:00',
     classId: 'c2', className: '6B', subject: 'Matematyka',
-    durationSeconds: 2880, status: 'raw',
-    isSharedNote: false, isSharedAudio: false,
+    durationSeconds: 2880, status: 'has_note', noteId: 'n6',
+    isSharedNote: true, isSharedAudio: true,
     topicId: 'tp6', topicName: 'Wzory skróconego mnożenia', thumbnailColor: '#ddd6fe',
   },
 ];
