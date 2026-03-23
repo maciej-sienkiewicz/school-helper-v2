@@ -3,6 +3,7 @@ import type {
   Recording, Note, SharedMaterial, GeneratedTest, ScheduleTemplate,
   Student, StudentLesson, StudentExam, StudentHomework, ExternalMaterial
 } from '../types';
+import { WZORY_SKROCONEGO_MNOZENIA_HTML } from './sampleNoteHtml';
 
 // ─── Teacher ─────────────────────────────────────────────────────────────────
 
@@ -65,7 +66,7 @@ export const mockTopicStatuses: TopicStatus[] = [
   { topicId: 'tp3', classId: 'c1', completed: true, hasNote: false, isShared: false, hasRecording: true },
   { topicId: 'tp4', classId: 'c1', completed: true, hasNote: true, noteId: 'n3', isShared: false, hasRecording: false },
   { topicId: 'tp5', classId: 'c1', completed: false, hasNote: false, isShared: false, hasRecording: false },
-  { topicId: 'tp6', classId: 'c1', completed: false, hasNote: false, isShared: false, hasRecording: false },
+  { topicId: 'tp6', classId: 'c1', completed: true, hasNote: true, noteId: 'n6', isShared: true, hasRecording: true },
   { topicId: 'tp7', classId: 'c1', completed: false, hasNote: false, isShared: false, hasRecording: false },
   { topicId: 'tp8', classId: 'c1', completed: false, hasNote: false, isShared: false, hasRecording: false },
   // 6B
@@ -265,6 +266,12 @@ Rysowanie wykresu
 
 Wystarczą dwa punkty. Najwygodniej wybrać x = 0 → (0, b) oraz x = −b/a → (−b/a, 0). Łączymy oba punkty prostą i zaznaczamy strzałki po obu stronach.`,
     createdAt: '2026-03-18', status: 'accepted', sharedWithClasses: ['c3'],
+  },
+  {
+    id: 'n6', recordingId: 'r8',
+    topicId: 'tp6', topicName: 'Wzory Skróconego Mnożenia',
+    content: WZORY_SKROCONEGO_MNOZENIA_HTML,
+    createdAt: '2026-03-23', status: 'accepted', sharedWithClasses: ['c1', 'c2', 'c5'],
   },
 ];
 
@@ -539,40 +546,23 @@ export const mockStudent: Student = {
 export const mockStudentLessons: StudentLesson[] = [
   {
     id: 'sl1',
-    date: '2026-03-20',
+    date: '2026-03-23',
     subject: 'Matematyka',
-    topicName: 'Równania liniowe z jedną niewiadomą',
+    topicName: 'Wzory Skróconego Mnożenia',
     unitName: 'Wyrażenia algebraiczne',
     teacherName: 'Anna Kowalska',
     className: '7A',
     durationMinutes: 45,
-    topicId: 'tp4',
-    noteId: 'n1',
-    noteContent: `# Równania liniowe z jedną niewiadomą
-
-## Definicja
-Równanie liniowe to równanie postaci **ax + b = 0**, gdzie a ≠ 0.
-
-## Metody rozwiązywania
-1. Przenosimy wyrazy z niewiadomą na lewą stronę
-2. Przenosimy liczby na prawą stronę
-3. Dzielimy obie strony przez współczynnik przy x
-
-## Przykłady
-- 2x + 6 = 0 → x = –3
-- 3x – 9 = 6 → x = 5
-- 5x + 2 = 3x – 4 → 2x = –6 → x = –3
-
-## Sprawdzanie rozwiązania
-Zawsze wstawiamy wynik z powrotem do równania i sprawdzamy, czy obie strony są równe.`,
-    recordingId: 'r3',
-    recordingDurationSeconds: 2687,
-    thumbnailColor: '#bae6fd',
-    likes: 14,
+    topicId: 'tp6',
+    noteId: 'n6',
+    recordingId: 'r8',
+    recordingDurationSeconds: 2880,
+    thumbnailColor: '#ddd6fe',
+    likes: 21,
     hasLiked: false,
     comments: [
-      { id: 'sc1', studentName: 'anonim', text: 'Super notatka, wszystko jasne!', createdAt: '2026-03-20T14:30:00' },
-      { id: 'sc2', studentName: 'anonim', text: 'Czy te przykłady będą na sprawdzianie?', createdAt: '2026-03-21T09:15:00' },
+      { id: 'sc1', studentName: 'anonim', text: 'Notatka naprawdę pomogła przed klasówką!', createdAt: '2026-03-23T14:30:00' },
+      { id: 'sc2', studentName: 'anonim', text: 'Super przykład z działką budowlaną 😄', createdAt: '2026-03-23T16:10:00' },
     ],
   },
   {

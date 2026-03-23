@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   GraduationCap, FileText, Play, ThumbsUp, MessageCircle,
@@ -9,7 +10,7 @@ import { format, parseISO } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { mockStudentLessons, mockStudentHomework, mockUnits, mockTopics, mockTopicStatuses } from '../../../data/mockData';
 import type { StudentLesson, StudentComment, StudentHomework } from '../../../types';
-import { NoteModal, MockPlayer } from './shared';
+import { MockPlayer } from './shared';
 
 // ─── Single lesson card ────────────────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ function LessonCard({
   onToggleDone: (id: string) => void;
   cardRef?: (el: HTMLDivElement | null) => void;
 }) {
-  const [noteOpen, setNoteOpen]           = useState(false);
+  const navigate = useNavigate();
   const [playerOpen, setPlayerOpen]       = useState(false);
   const [commentsOpen, setCommentsOpen]   = useState(false);
   const [liked, setLiked]                 = useState(lesson.hasLiked);
@@ -87,12 +88,6 @@ function LessonCard({
 
   return (
     <>
-      <AnimatePresence>
-        {noteOpen && lesson.noteContent && (
-          <NoteModal content={lesson.noteContent} topicName={lesson.topicName} onClose={() => setNoteOpen(false)} />
-        )}
-      </AnimatePresence>
-
       {/* Niebieskie obramowanie lewe — "oficjalny" charakter materiału */}
       <div
         ref={cardRef}
@@ -123,7 +118,7 @@ function LessonCard({
             {lesson.noteId
               ? (
                 <button
-                  onClick={() => setNoteOpen(true)}
+                  onClick={() => navigate(`/student/note/${lesson.noteId}`)}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
                 >
                   <FileText className="w-3.5 h-3.5" /> Otwórz notatkę

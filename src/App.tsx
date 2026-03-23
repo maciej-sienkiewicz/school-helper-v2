@@ -15,6 +15,7 @@ import { StudentDashboard } from './pages/student/Dashboard';
 import { StudentExams } from './pages/student/Exams';
 import { StudentProfile } from './pages/student/Profile';
 import { SubjectPage } from './pages/student/subject';
+import { NoteViewerPage } from './pages/student/note/NoteViewerPage';
 
 function AppRoutes() {
   const { isLoggedIn, role } = useAuth();
@@ -49,6 +50,9 @@ function AppRoutes() {
         <Route path="exams" element={<StudentExams />} />
         <Route path="profile" element={<StudentProfile />} />
       </Route>
+
+      {/* Full-page note viewer – outside StudentLayout (no sidebar) */}
+      <Route path="/student/note/:noteId" element={<NoteViewerPage />} />
 
       <Route path="*" element={<Navigate to={role === 'student' ? '/student' : '/teacher'} replace />} />
     </Routes>
