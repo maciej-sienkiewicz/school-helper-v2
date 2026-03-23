@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, BookOpen, Brain, PenLine, Eye, Printer, CheckCircle2, Sparkles } from 'lucide-react';
-import { mockNotes } from '../../../data/mockData';
-import { renderMarkdown } from '../subject/shared';
+import { ArrowLeft, BookOpen, Brain, PenLine, Eye, Printer, CheckCircle2, Sparkles, ChevronDown, ChevronUp, Headphones } from 'lucide-react';
+import { mockNotes, mockRecordings } from '../../../data/mockData';
+import { renderMarkdown, MockPlayer } from '../subject/shared';
 import { flashcardStore } from '../../../data/flashcardStore';
 import { buildIframeDoc } from './iframeInjection';
 import { generateFlashcard } from './flashcardService';
@@ -47,6 +47,10 @@ export function NoteViewerPage() {
   const note = useMemo(() => mockNotes.find(n => n.id === noteId), [noteId]);
   const isHtml = useMemo(() => Boolean(note?.content.trimStart().match(/^<!DOCTYPE|^<html/i)), [note]);
   const iframeDoc = useMemo(() => (note && isHtml ? buildIframeDoc(note.content) : ''), [note, isHtml]);
+
+  const recording = useMemo(() => note?.recordingId ? mockRecordings.find(r => r.id === note.recordingId) : undefined, [note]);
+  const hasAudio = Boolean(recording?.isSharedAudio);
+  const [audioExpanded, setAudioExpanded] = useState(true);
 
   // Messages from iframe (progress + selection)
   useEffect(() => {
@@ -250,6 +254,38 @@ export function NoteViewerPage() {
           <CommentModal key="comment-modal" selectedText={commentText} onClose={() => setCommentText(null)} />
         )}
       </AnimatePresence>
+
+      {/* Audio player */}
+      {hasAudio && recording && (
+        <div className="sticky bottom-0 z-40 bg-white border-t border-gray-100 shadow-lg">
+          <button
+            onClick={() => setAudioExpanded(e => !e)}
+            className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: recording.thumbnailColor ?? '#e9d5ff' }}>
+              <Headphones className="w-3.5 h-3.5 text-gray-700" />
+            </div>
+            <span className="flex-1 text-left text-sm font-semibold text-gray-800">Nagranie z lekcji</span>
+            {audioExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
+          </button>
+          <AnimatePresence initial={false}>
+            {audioExpanded && (
+              <motion.div
+                key="audio-body"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4">
+                  <MockPlayer durationSeconds={recording.durationSeconds} color={recording.thumbnailColor ?? '#7c3aed'} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
