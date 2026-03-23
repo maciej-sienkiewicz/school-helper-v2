@@ -257,19 +257,7 @@ export function NoteViewerPage() {
 
       {/* Audio player – sliding right panel */}
       {hasAudio && recording && (
-        <div className="fixed bottom-24 right-0 z-40 flex items-stretch">
-          {/* Toggle tab */}
-          <button
-            onClick={() => setAudioExpanded(e => !e)}
-            className="flex flex-col items-center justify-center gap-1.5 w-9 py-4 rounded-l-2xl shadow-lg border border-r-0 border-gray-100 bg-white hover:bg-gray-50 transition-colors cursor-pointer flex-shrink-0"
-            title={audioExpanded ? 'Zwiń player' : 'Nagranie z lekcji'}
-          >
-            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: recording.thumbnailColor ?? '#e9d5ff' }}>
-              <Headphones className="w-3 h-3 text-gray-700" />
-            </div>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${audioExpanded ? 'rotate-[-90deg]' : 'rotate-90'}`} />
-          </button>
-
+        <div className="fixed bottom-6 right-0 z-40 flex items-end">
           {/* Panel */}
           <AnimatePresence initial={false}>
             {audioExpanded && (
@@ -280,7 +268,6 @@ export function NoteViewerPage() {
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 className="overflow-hidden bg-white border border-gray-100 shadow-lg rounded-l-2xl"
-                style={{ originX: 1 }}
               >
                 <div className="w-80 p-4 space-y-1">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Nagranie z lekcji</p>
@@ -289,6 +276,18 @@ export function NoteViewerPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Toggle tab – fixed size, never changes */}
+          <button
+            onClick={() => setAudioExpanded(e => !e)}
+            className="flex flex-col items-center justify-center gap-1.5 w-9 h-20 rounded-l-2xl shadow-lg border border-r-0 border-gray-100 bg-white hover:bg-gray-50 transition-colors cursor-pointer flex-shrink-0"
+            title={audioExpanded ? 'Zwiń player' : 'Nagranie z lekcji'}
+          >
+            <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: recording.thumbnailColor ?? '#e9d5ff' }}>
+              <Headphones className="w-3 h-3 text-gray-700" />
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${audioExpanded ? 'rotate-[-90deg]' : 'rotate-90'}`} />
+          </button>
         </div>
       )}
     </div>
