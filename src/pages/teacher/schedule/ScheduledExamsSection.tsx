@@ -55,8 +55,6 @@ export function ScheduledExamsSection({ exams, onScheduleTest, onEditExam, onDel
             const dateLabel = new Date(exam.date).toLocaleDateString('pl-PL', {
               day: 'numeric', month: 'short', year: 'numeric',
             });
-            const isUpcoming = new Date(exam.date) >= new Date(new Date().toDateString());
-
             return (
               <motion.div
                 key={exam.id}
@@ -75,11 +73,6 @@ export function ScheduledExamsSection({ exams, onScheduleTest, onEditExam, onDel
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-sm font-semibold text-gray-800 leading-tight">{exam.testTitle}</span>
-                    {isUpcoming && (
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                        Nadchodzący
-                      </span>
-                    )}
                   </div>
                   <div className="flex items-center gap-1 mt-1 text-xs text-gray-400">
                     <Calendar className="w-3 h-3" /> {dateLabel}
