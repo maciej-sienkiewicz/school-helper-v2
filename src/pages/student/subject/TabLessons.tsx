@@ -1,20 +1,16 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  GraduationCap, FileText, Play, ThumbsUp, MessageCircle,
-  ChevronDown, ChevronUp, Send, Layers, BookOpen, CheckCircle2,
-  Circle, Mic, ClipboardList,
-} from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { FileText, Play, Send, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { pl } from 'date-fns/locale';
-import { mockStudentLessons, mockStudentHomework, mockUnits, mockTopics, mockTopicStatuses } from '../../../data/mockData';
+import { mockStudentLessons, mockStudentHomework } from '../../../data/mockData';
 import type { StudentLesson, StudentComment, StudentHomework } from '../../../types';
 import { MockPlayer } from './shared';
 
-// ─── Single lesson card ────────────────────────────────────────────────────────
+// ─── Checkbox wiersz zadania domowego ─────────────────────────────────────────
 
-function HomeworkBadge({
+function HomeworkRow({
   hw,
   done,
   onToggle,
@@ -23,33 +19,55 @@ function HomeworkBadge({
   done: boolean;
   onToggle: () => void;
 }) {
+  const days    = differenceInDays(parseISO(hw.dueDate), new Date());
+  const overdue = days < 0 && !done;
+  const urgent  = !overdue && days <= 2 && !done;
+
+  const label =
+    done      ? 'Zrobione'
+    : overdue ? 'Zaległe!'
+    : days === 0 ? 'Dzisiaj!'
+    : days === 1 ? 'Jutro!'
+    : `Za ${days} dni`;
+
+  const labelColor =
+    done      ? 'text-emerald-600'
+    : overdue ? 'text-red-500'
+    : urgent  ? 'text-amber-600'
+    :            'text-gray-400';
+
   return (
     <button
       onClick={onToggle}
-      className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-left cursor-pointer transition-opacity ${
-        hw.isExtra ? 'border-orange-100 bg-orange-50/60' : 'border-amber-100 bg-amber-50/60'
-      } ${done ? 'opacity-50' : ''}`}
+      className={`w-full flex items-center gap-3 text-left cursor-pointer transition-opacity group ${done ? 'opacity-40' : ''}`}
     >
-      <ClipboardList className={`w-3.5 h-3.5 flex-shrink-0 ${hw.isExtra ? 'text-orange-400' : 'text-amber-500'}`} />
-      <span className={`flex-1 text-xs font-medium truncate ${done ? 'line-through text-gray-400' : 'text-gray-700'}`}>
-        {hw.title}
-      </span>
-      {hw.isExtra && (
-        <span className="text-xs text-orange-500 font-semibold flex-shrink-0">+</span>
-      )}
       {/* Checkbox */}
       <div
-        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border-2 transition-colors"
-        style={done
-          ? { backgroundColor: '#10b981', borderColor: '#10b981' }
-          : { backgroundColor: 'transparent', borderColor: '#d1d5db' }
+        className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors"
+        style={
+          done
+            ? { backgroundColor: '#10b981', borderColor: '#10b981' }
+            : { borderColor: overdue ? '#fca5a5' : '#d1d5db' }
         }
       >
-        {done && <CheckCircle2 className="w-3 h-3 text-white" />}
+        {done && (
+          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 8">
+            <path d="M1 4l3 3L9 1" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        )}
       </div>
+
+      <span className={`flex-1 text-xs font-medium leading-snug ${done ? 'line-through text-gray-400' : 'text-gray-700'}`}>
+        {hw.title}
+        {hw.isExtra && <span className="text-amber-500 ml-1 font-semibold">+</span>}
+      </span>
+
+      <span className={`text-xs font-semibold flex-shrink-0 ${labelColor}`}>{label}</span>
     </button>
   );
 }
+
+// ─── Karta lekcji ──────────────────────────────────────────────────────────────
 
 function LessonCard({
   lesson,
@@ -65,187 +83,161 @@ function LessonCard({
   cardRef?: (el: HTMLDivElement | null) => void;
 }) {
   const navigate = useNavigate();
-  const [playerOpen, setPlayerOpen]       = useState(false);
-  const [commentsOpen, setCommentsOpen]   = useState(false);
-  const [liked, setLiked]                 = useState(lesson.hasLiked);
-  const [likeCount, setLikeCount]         = useState(lesson.likes);
-  const [comments, setComments]           = useState<StudentComment[]>(lesson.comments);
-  const [newComment, setNewComment]       = useState('');
-
-  const toggleLike = () => {
-    setLiked(p => !p);
-    setLikeCount(c => liked ? c - 1 : c + 1);
-  };
+  const [playerOpen, setPlayerOpen]     = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments]         = useState<StudentComment[]>(lesson.comments);
+  const [newComment, setNewComment]     = useState('');
 
   const addComment = () => {
     if (!newComment.trim()) return;
     setComments(prev => [
       ...prev,
-      { id: `c-${Date.now()}`, studentName: 'anonim', text: newComment.trim(), createdAt: new Date().toISOString(), isOwn: true },
+      {
+        id: `c-${Date.now()}`,
+        studentName: 'anonim',
+        text: newComment.trim(),
+        createdAt: new Date().toISOString(),
+        isOwn: true,
+      },
     ]);
     setNewComment('');
   };
 
+  // Tylko pending zadania w karcie lekcji
+  const pendingHw = homework.filter(h => !doneIds.has(h.id));
+  const doneHw    = homework.filter(h =>  doneIds.has(h.id));
+  const allHw     = [...pendingHw, ...doneHw];
+
   return (
-    <>
-      {/* Niebieskie obramowanie lewe — "oficjalny" charakter materiału */}
-      <div
-        ref={cardRef}
-        className="bg-white rounded-3xl shadow-card border border-white/80 border-l-4 overflow-hidden"
-        style={{ borderLeftColor: '#0ea5e9' }}
-      >
-        <div className="p-5">
+    <div
+      ref={cardRef}
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+    >
+      {/* ── Główna treść lekcji ── */}
+      <div className="px-5 py-4">
 
-          {/* Header */}
-          <div className="flex items-start gap-3">
-            <div
-              className="w-11 h-11 rounded-2xl flex-shrink-0 flex items-center justify-center"
-              style={{ backgroundColor: lesson.thumbnailColor }}
-            >
-              <GraduationCap className="w-5 h-5 text-white/80" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs text-gray-400">
-                {format(parseISO(lesson.date), 'EEEE, d MMMM yyyy', { locale: pl })}
-              </div>
-              <div className="font-bold text-gray-800 text-sm mt-0.5">{lesson.topicName}</div>
-              <div className="text-xs text-gray-500">{lesson.unitName}</div>
-            </div>
-          </div>
+        {/* Data */}
+        <p className="text-xs text-gray-400 mb-1">
+          {format(parseISO(lesson.date), 'd MMMM yyyy', { locale: pl })}
+        </p>
 
-          {/* Material buttons */}
+        {/* Temat i dział */}
+        <h3 className="text-sm font-semibold text-gray-900 leading-snug">{lesson.topicName}</h3>
+        <p className="text-xs text-gray-400 mt-0.5">{lesson.unitName}</p>
+
+        {/* Materiały */}
+        {(lesson.noteId || lesson.recordingId) && (
           <div className="flex items-center gap-2 mt-3">
-            {lesson.noteId
-              ? (
-                <button
-                  onClick={() => navigate(`/student/note/${lesson.noteId}`)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-semibold transition-colors cursor-pointer min-h-[44px]"
-                >
-                  <FileText className="w-3.5 h-3.5" /> Otwórz notatkę
-                </button>
-              )
-              : <span className="text-xs text-gray-300 flex items-center gap-1"><FileText className="w-3 h-3" /> Brak notatki</span>
-            }
+            {lesson.noteId && (
+              <button
+                onClick={() => navigate(`/student/note/${lesson.noteId}`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Notatka
+              </button>
+            )}
             {lesson.recordingId && (
               <button
                 onClick={() => setPlayerOpen(p => !p)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer min-h-[44px] ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                   playerOpen
-                    ? 'bg-violet-200 text-violet-800'
-                    : 'bg-violet-100 hover:bg-violet-200 text-violet-700'
+                    ? 'bg-gray-200 text-gray-900'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                 }`}
               >
-                <Play className="w-3.5 h-3.5" /> Nagranie
+                <Play className="w-3.5 h-3.5" />
+                Nagranie
               </button>
             )}
           </div>
+        )}
 
-          {/* Homework badges */}
-          {homework.length > 0 && (
-            <div className="space-y-1.5 mt-3">
-              {homework.map(hw => (
-                <HomeworkBadge key={hw.id} hw={hw} done={doneIds.has(hw.id)} onToggle={() => onToggleDone(hw.id)} />
-              ))}
-            </div>
+        {/* Odtwarzacz nagrania */}
+        <AnimatePresence>
+          {playerOpen && lesson.recordingId && lesson.recordingDurationSeconds && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4">
+                <MockPlayer durationSeconds={lesson.recordingDurationSeconds} color="#f3f4f6" />
+              </div>
+            </motion.div>
           )}
+        </AnimatePresence>
+      </div>
 
-          {/* ── Recording player (shown only when Nagranie is toggled) ── */}
-          <AnimatePresence>
-            {playerOpen && lesson.recordingId && lesson.recordingDurationSeconds && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.22 }}
-                className="overflow-hidden"
-              >
-                <div className="pt-4">
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                    Nagranie lekcji
-                  </p>
-                  <MockPlayer durationSeconds={lesson.recordingDurationSeconds} color={lesson.thumbnailColor} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* ── Zadania domowe powiązane z lekcją ── */}
+      {allHw.length > 0 && (
+        <div className="px-5 py-3 border-t border-gray-50 space-y-2.5">
+          {allHw.map(hw => (
+            <HomeworkRow
+              key={hw.id}
+              hw={hw}
+              done={doneIds.has(hw.id)}
+              onToggle={() => onToggleDone(hw.id)}
+            />
+          ))}
+        </div>
+      )}
 
-          {/* ── Interaction bar ── */}
-          <div className="flex items-center gap-1 mt-3 pt-3 border-t border-gray-100">
-            {/* Like */}
-            <button
-              onClick={toggleLike}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl min-h-[44px] min-w-[44px] transition-all cursor-pointer text-sm font-semibold
-                         hover:bg-sky-50 active:scale-95"
-              style={{ color: liked ? '#0ea5e9' : '#9ca3af' }}
-            >
-              <ThumbsUp className={`w-4 h-4 ${liked ? 'fill-sky-500 text-sky-500' : ''}`} />
-              <span>{likeCount}</span>
-            </button>
+      {/* ── Pytania do lekcji (ukryte domyślnie) ── */}
+      {comments.length > 0 && (
+        <div className="border-t border-gray-50">
+          <button
+            onClick={() => setCommentsOpen(o => !o)}
+            className="w-full flex items-center gap-2 px-5 py-3 text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>{comments.length} {comments.length === 1 ? 'pytanie' : 'pytań'}</span>
+            {commentsOpen
+              ? <ChevronUp className="w-3.5 h-3.5 ml-auto" />
+              : <ChevronDown className="w-3.5 h-3.5 ml-auto" />
+            }
+          </button>
 
-            {/* Comments toggle */}
-            <button
-              onClick={() => setCommentsOpen(e => !e)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl min-h-[44px] min-w-[44px] text-sm text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition-colors cursor-pointer"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>{comments.length} {comments.length === 1 ? 'pytanie' : 'pytań'}</span>
-              {commentsOpen ? <ChevronUp className="w-3.5 h-3.5 ml-0.5" /> : <ChevronDown className="w-3.5 h-3.5 ml-0.5" />}
-            </button>
-          </div>
-
-          {/* ── Expandable: comments only ── */}
           <AnimatePresence>
             {commentsOpen && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.22 }}
+                transition={{ duration: 0.18 }}
                 className="overflow-hidden"
               >
-                <div className="pt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Pytania ({comments.length})
-                    </p>
-                    <span className="text-xs text-gray-400">Anonimowe</span>
-                  </div>
-
+                <div className="px-5 pb-4 space-y-2">
                   {comments.map(c => (
                     <div
                       key={c.id}
-                      className={`p-3 rounded-2xl text-sm mb-2 ${c.isOwn ? 'bg-sky-50 border border-sky-100' : 'bg-gray-50'}`}
+                      className={`px-3 py-2.5 rounded-xl text-xs ${
+                        c.isOwn ? 'bg-gray-100 text-gray-700' : 'bg-gray-50 text-gray-600'
+                      }`}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`font-semibold text-xs ${c.isOwn ? 'text-sky-700' : 'text-gray-500'}`}>
-                          {c.isOwn ? 'Ty (anonimowo)' : 'Anonimowy uczeń'}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {format(parseISO(c.createdAt), 'd MMM, HH:mm', { locale: pl })}
-                        </span>
-                      </div>
-                      <p className="text-gray-700">{c.text}</p>
+                      <span className="font-semibold text-gray-400 mr-2">
+                        {c.isOwn ? 'Ty' : 'Anonimowy uczeń'}
+                      </span>
+                      {c.text}
                     </div>
                   ))}
 
-                  {comments.length === 0 && (
-                    <p className="text-xs text-gray-400 mb-3">Nikt jeszcze nie zadał pytania — śmiało!</p>
-                  )}
-
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 pt-1">
                     <input
                       value={newComment}
                       onChange={e => setNewComment(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && addComment()}
-                      placeholder="Zadaj anonimowe pytanie do tej lekcji..."
-                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
+                      placeholder="Zadaj anonimowe pytanie…"
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-gray-300"
                     />
                     <button
                       onClick={addComment}
                       disabled={!newComment.trim()}
-                      className="w-11 h-11 rounded-xl bg-sky-500 hover:bg-sky-600 disabled:opacity-40 text-white flex items-center justify-center cursor-pointer flex-shrink-0"
+                      className="w-9 h-9 rounded-xl bg-gray-900 hover:bg-gray-700 disabled:opacity-30 text-white flex items-center justify-center cursor-pointer flex-shrink-0 transition-colors"
                     >
-                      <Send className="w-4 h-4" />
+                      <Send className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -253,156 +245,34 @@ function LessonCard({
             )}
           </AnimatePresence>
         </div>
-      </div>
-    </>
-  );
-}
+      )}
 
-// ─── Curriculum panel ──────────────────────────────────────────────────────────
-
-function CurriculumPanel({
-  lessons,
-  onTopicClick,
-}: {
-  lessons: StudentLesson[];
-  onTopicClick: (topicId: string) => void;
-}) {
-  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set(['u1']));
-
-  const toggleUnit = (id: string) =>
-    setExpandedUnits(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  // Build a topicId → lesson map
-  const lessonByTopicId = new Map<string, StudentLesson>();
-  for (const l of lessons) {
-    if (l.topicId) lessonByTopicId.set(l.topicId, l);
-  }
-
-  // Build unitId → completed count from lessons
-  const completedTopicIdsByUnit = new Map<string, Set<string>>();
-  for (const l of lessons) {
-    if (l.topicId) {
-      const topic = mockTopics.find(t => t.id === l.topicId);
-      if (topic) {
-        if (!completedTopicIdsByUnit.has(topic.unitId))
-          completedTopicIdsByUnit.set(topic.unitId, new Set());
-        completedTopicIdsByUnit.get(topic.unitId)!.add(topic.id);
-      }
-    }
-  }
-
-  // Also use mockTopicStatuses for status indicators
-  const getStatus = (topicId: string) =>
-    mockTopicStatuses.find(s => s.topicId === topicId);
-
-  return (
-    <div className="space-y-2">
-      {/* Legend */}
-      <div className="flex flex-wrap gap-3 mb-3 text-xs">
-        {[
-          { icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />, label: 'Zrealizowany' },
-          { icon: <FileText className="w-3.5 h-3.5 text-violet-500" />, label: 'Ma notatkę' },
-          { icon: <Mic className="w-3.5 h-3.5 text-amber-500" />, label: 'Ma nagranie' },
-        ].map(({ icon, label }) => (
-          <div key={label} className="flex items-center gap-1 text-gray-500">
-            {icon} {label}
-          </div>
-        ))}
-      </div>
-
-      {mockUnits.map(unit => {
-        const topics = mockTopics.filter(t => t.unitId === unit.id);
-        const isExpanded = expandedUnits.has(unit.id);
-        const completedInUnit = completedTopicIdsByUnit.get(unit.id)?.size ?? 0;
-
-        return (
-          <div key={unit.id} className="border border-gray-100 rounded-2xl overflow-hidden">
+      {/* Jeśli brak komentarzy, pokaż pole do zadania pytania */}
+      {comments.length === 0 && (
+        <div className="border-t border-gray-50 px-5 py-3">
+          <div className="flex gap-2">
+            <input
+              value={newComment}
+              onChange={e => setNewComment(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addComment()}
+              placeholder="Zadaj anonimowe pytanie do tej lekcji…"
+              className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-gray-300"
+            />
             <button
-              onClick={() => toggleUnit(unit.id)}
-              className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-sky-50 transition-colors cursor-pointer"
+              onClick={addComment}
+              disabled={!newComment.trim()}
+              className="w-9 h-9 rounded-xl bg-gray-900 hover:bg-gray-700 disabled:opacity-30 text-white flex items-center justify-center cursor-pointer flex-shrink-0 transition-colors"
             >
-              <div className="w-7 h-7 rounded-xl bg-sky-100 flex items-center justify-center flex-shrink-0">
-                <GraduationCap className="w-3.5 h-3.5 text-sky-600" />
-              </div>
-              <div className="flex-1 text-left">
-                <span className="text-sm font-bold text-gray-800">{unit.name}</span>
-                <div className="text-xs text-gray-500 mt-0.5">
-                  {completedInUnit}/{topics.length} tematów zrealizowanych
-                </div>
-              </div>
-              {/* Progress bar */}
-              <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                <div
-                  className="h-full bg-emerald-400 rounded-full transition-all"
-                  style={{ width: `${topics.length ? (completedInUnit / topics.length) * 100 : 0}%` }}
-                />
-              </div>
-              {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+              <Send className="w-3.5 h-3.5" />
             </button>
-
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.22 }}
-                >
-                  <div className="divide-y divide-gray-50">
-                    {topics.map(topic => {
-                      const status = getStatus(topic.id);
-                      const hasLesson = lessonByTopicId.has(topic.id);
-                      const isDone = hasLesson || status?.completed;
-
-                      return (
-                        <div
-                          key={topic.id}
-                          className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                            hasLesson ? 'hover:bg-sky-50/60 cursor-pointer' : ''
-                          }`}
-                          onClick={hasLesson ? () => onTopicClick(topic.id) : undefined}
-                        >
-                          {isDone
-                            ? <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                            : <Circle className="w-4 h-4 text-gray-300 flex-shrink-0" />
-                          }
-                          <span className={`flex-1 text-sm ${isDone ? 'text-gray-600' : 'text-gray-400'} ${hasLesson ? 'font-medium' : ''}`}>
-                            {topic.name}
-                          </span>
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {status?.hasNote && (
-                              <div className="w-5 h-5 rounded-lg bg-violet-100 flex items-center justify-center" title="Ma notatkę">
-                                <FileText className="w-3 h-3 text-violet-500" />
-                              </div>
-                            )}
-                            {status?.hasRecording && (
-                              <div className="w-5 h-5 rounded-lg bg-amber-100 flex items-center justify-center" title="Ma nagranie">
-                                <Mic className="w-3 h-3 text-amber-500" />
-                              </div>
-                            )}
-                            {hasLesson && (
-                              <ChevronDown className="w-3.5 h-3.5 text-sky-400 rotate-[-90deg]" />
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── Tab component ─────────────────────────────────────────────────────────────
+// ─── Zakładka Lekcje ───────────────────────────────────────────────────────────
 
 export function TabLessons({
   subject,
@@ -413,32 +283,24 @@ export function TabLessons({
   doneIds: Set<string>;
   onToggleDone: (id: string) => void;
 }) {
-  const lessons  = mockStudentLessons.filter(l => l.subject === subject);
-  const homework = mockStudentHomework.filter(h => h.subject === subject);
-  const [curriculumOpen, setCurriculumOpen] = useState(false);
+  // Sortuj od najnowszej do najstarszej
+  const lessons = mockStudentLessons
+    .filter(l => l.subject === subject)
+    .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
 
-  // Refs for each lesson card keyed by lesson id
+  const homework = mockStudentHomework.filter(h => h.subject === subject);
+
   const cardRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
-  const scrollToTopic = (topicId: string) => {
-    const lesson = lessons.find(l => l.topicId === topicId);
-    if (!lesson) return;
-    const el = cardRefs.current.get(lesson.id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Brief highlight flash
-      el.style.transition = 'box-shadow 0.3s';
-      el.style.boxShadow = '0 0 0 3px #0ea5e9';
-      setTimeout(() => { el.style.boxShadow = ''; }, 1200);
-    }
-    // Close curriculum panel after navigation
-    setCurriculumOpen(false);
-  };
+  if (lessons.length === 0) {
+    return (
+      <p className="text-sm text-gray-400 text-center py-12">
+        Brak lekcji z tego przedmiotu.
+      </p>
+    );
+  }
 
-  if (lessons.length === 0)
-    return <p className="text-gray-400 text-sm text-center py-12">Brak lekcji z tego przedmiotu.</p>;
-
-  // Group by curriculum unit
+  // Grupuj po dziale, zachowując kolejność chronologiczną (dział = najnowsza lekcja w nim)
   const byUnit = new Map<string, StudentLesson[]>();
   for (const l of lessons) {
     if (!byUnit.has(l.unitName)) byUnit.set(l.unitName, []);
@@ -446,51 +308,18 @@ export function TabLessons({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Program nauczania — expandable */}
-      <div className="rounded-2xl border border-sky-200 overflow-hidden">
-        <button
-          onClick={() => setCurriculumOpen(o => !o)}
-          className="w-full flex items-center gap-3 p-4 bg-sky-50 hover:bg-sky-100 transition-colors cursor-pointer"
-        >
-          <div className="w-2 h-8 rounded-full bg-sky-400 flex-shrink-0" />
-          <div className="flex items-center gap-2 flex-1">
-            <BookOpen className="w-4 h-4 text-sky-600" />
-            <span className="text-sm font-bold text-sky-700">Program nauczania</span>
-          </div>
-          {curriculumOpen
-            ? <ChevronUp className="w-4 h-4 text-sky-500 flex-shrink-0" />
-            : <ChevronDown className="w-4 h-4 text-sky-500 flex-shrink-0" />
-          }
-        </button>
-
-        <AnimatePresence>
-          {curriculumOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden"
-            >
-              <div className="p-4 bg-white border-t border-sky-100">
-                <CurriculumPanel lessons={lessons} onTopicClick={scrollToTopic} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
+    <div className="space-y-8">
       {[...byUnit.entries()].map(([unit, list]) => (
         <div key={unit}>
-          {/* Section divider */}
-          <div className="flex items-center gap-2 mb-3">
-            <Layers className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <span className="text-sm font-bold text-gray-600">{unit}</span>
-            <span className="text-xs text-gray-400">({list.length})</span>
-            <div className="flex-1 h-px bg-gray-100 ml-1" />
+          {/* Nagłówek działu */}
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              {unit}
+            </span>
+            <div className="flex-1 h-px bg-gray-100" />
           </div>
 
+          {/* Karty lekcji */}
           <div className="space-y-2">
             {list.map(l => (
               <LessonCard
